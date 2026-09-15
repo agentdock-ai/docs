@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { AgentDockBrand } from '@/components/brand';
 
-const quickstart = `import { AgentDock } from
+const quickstart = `import { createAgentDock } from
   "@agentdock-ai/agentdock";
 import { AgentDockModel } from
   "@agentdock-ai/models";
 
-const agent = new AgentDock({
+const agent = createAgentDock({
   model: AgentDockModel.openAI({
     model: "gpt-5.4-mini",
   }),
@@ -21,8 +21,8 @@ const result = await agent.run(
 function LangGraphLogo({ className = '' }: { className?: string }) {
   return (
     <span className={`langgraph-brand ${className}`.trim()}>
-      <img className="langgraph-logo langgraph-logo-dark" src="/brand/langgraph-logo-dark.svg" alt="LangGraph" />
-      <img className="langgraph-logo langgraph-logo-light" src="/brand/langgraph-logo-light.svg" alt="LangGraph" />
+      <img className="langgraph-logo langgraph-logo-light-theme" src="/brand/langgraph-logo-light.svg" alt="LangGraph" />
+      <img className="langgraph-logo langgraph-logo-dark-theme" src="/brand/langgraph-logo-dark.svg" alt="LangGraph" />
     </span>
   );
 }
