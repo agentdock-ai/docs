@@ -22,9 +22,12 @@ export OPENAI_API_KEY="your-key"
 ## 3. Import Agentdock's API
 
 ```ts
-import { createAgentDock, defineTool } from "@agentdock-ai/agentdock";
+import { AgentDock, defineTool } from "@agentdock-ai/agentdock";
 import { AgentDockModel } from "@agentdock-ai/models";
 import { z } from "zod";
 ```
 
 Continue with the [quickstart](./quickstart). It creates a model, registers a tool, and runs the agent.
+
+`AgentDock` is the only agent construction API. `defineTool()` creates a typed tool
+definition; it does not create another agent runtime.

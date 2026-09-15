@@ -23,16 +23,14 @@ const lookupOrder = defineTool({
 
 ## Add tools to the agent
 
-Pass a name-to-tool object to `createAgentDock`:
+Register the typed tool on the single `AgentDock` instance:
 
 ```ts
-const agent = createAgentDock({
-  model,
-  tools: { lookupOrder },
-});
+const agent = new AgentDock({ model });
+agent.registerTool(lookupOrder);
 ```
 
-Or register tools on an existing `AgentDock` instance with `registerTool()` or `registerTools()`.
+Register additional tools with `registerTool()` or `registerTools()`.
 
 ## Validate input
 

@@ -6,7 +6,7 @@ description: Summarize older messages before a conversation gets too large.
 Context management is off by default. Turn on summarization when an agent needs to keep working through long conversations.
 
 ```ts
-const agent = createAgentDock({
+const agent = new AgentDock({
   model,
   contextManagement: {
     summarization: {

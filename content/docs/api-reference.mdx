@@ -7,13 +7,13 @@ description: The main Agentdock classes, functions, and options.
 
 | API | Use it to |
 | --- | --- |
-| `createAgentDock(options)` | Create an agent with typed tools and an optional shared policy. Recommended for most apps. |
 | `defineTool(options)` | Define a tool with a Zod input schema. |
-| `new AgentDock(options)` | Create an agent when you need to register tools later or use advanced options. |
+| `new AgentDock(options)` | Create the AgentDock runtime. |
 
-Both creation methods return an `AgentDock` instance.
-
-`createAgentDock()` also accepts `instructions`, `tools`, a shared `policy`, `persistence`, and `defaults`. It supports `middleware` and a custom `coordinator` for advanced integrations. Use `new AgentDock()` when you need a `ToolRegistry` or direct checkpoint setup. Agentdock closes checkpoint adapters passed as `checkpoint`; your app manages raw checkpoint savers.
+`AgentDock` is the only agent construction API. Register tools with `registerTool()`
+or `registerTools()`, set the system prompt through `defaults.systemPrompt`, and
+pass a checkpoint adapter through `checkpoint`. Agentdock closes adapters passed as
+`checkpoint`; your app manages raw checkpoint savers.
 
 ## Run methods
 
@@ -62,6 +62,7 @@ Run results have one of four statuses: `completed`, `waiting_for_approval`, `fai
 - `defaults`: default `systemPrompt` and `maxSteps` for runs.
 - `checkpoint`: an Agentdock checkpoint adapter. Agentdock owns and closes it.
 - `contextManagement`: optional conversation summarization settings.
-- `registry`: a `ToolRegistry` for advanced tool setup.
+- `registry`: a `ToolRegistry` for registering tools during construction. Tools can
+  also be registered after construction with `registerTool()` or `registerTools()`.
 
 Run options include `sessionId`, `runId`, `sessionNamespace`, `systemPrompt`, `maxSteps`, `toolTimeout`, `authorizationTimeout`, and `abortSignal`. See [runs](./runs) for their use.

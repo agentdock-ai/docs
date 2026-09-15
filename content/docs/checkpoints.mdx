@@ -22,16 +22,13 @@ yarn add @agentdock-ai/checkpoint-sqlite
 
 ```ts
 import { SqliteCheckpoint } from "@agentdock-ai/checkpoint-sqlite";
+import { AgentDock } from "@agentdock-ai/agentdock";
 
-const agent = createAgentDock({
+const agent = new AgentDock({
   model,
-  persistence: {
-    checkpoint: new SqliteCheckpoint({ path: "./data/agentdock.sqlite" }),
-  },
+  checkpoint: new SqliteCheckpoint({ path: "./data/agentdock.sqlite" }),
 });
 ```
-
-For `new AgentDock()`, pass the adapter as `checkpoint` instead of using `persistence.checkpoint`.
 
 ## Close the agent
 

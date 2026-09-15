@@ -8,7 +8,7 @@ This example uses OpenAI. Set `OPENAI_API_KEY` before running it.
 ## Create the agent
 
 ```ts
-import { createAgentDock, defineTool } from "@agentdock-ai/agentdock";
+import { AgentDock, ToolRegistry, defineTool } from "@agentdock-ai/agentdock";
 import { AgentDockModel } from "@agentdock-ai/models";
 import { z } from "zod";
 
@@ -19,10 +19,15 @@ const weather = defineTool({
   run: async ({ city }) => ({ city, forecast: "Sunny" }),
 });
 
-const agent = createAgentDock({
+const registry = new ToolRegistry();
+registry.register(weather);
+
+const agent = new AgentDock({
   model: AgentDockModel.openAI({ model: "gpt-5.4-mini" }),
-  instructions: "Answer clearly. Use the weather tool when it helps.",
-  tools: { weather },
+  defaults: {
+    systemPrompt: "Answer clearly. Use the weather tool when it helps.",
+  },
+  registry,
 });
 ```
 
