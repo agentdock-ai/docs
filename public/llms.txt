@@ -1,0 +1,37 @@
+# Agentdock
+
+> An easy-to-use TypeScript wrapper around LangGraph for building production-ready AI agents.
+
+Agentdock gives TypeScript applications a clear API for model configuration, typed tools, approvals, sessions, persistence, lifecycle control, and normalized streaming events. LangGraph provides the durable orchestration underneath; application code uses Agentdock APIs instead of importing LangChain provider classes directly.
+
+## Documentation
+
+- [Installation](/docs/installation): Install Agentdock, its model package, and Zod.
+- [Quickstart](/docs/quickstart): Create an agent, register a typed tool, and run it.
+- [Models](/docs/models): Configure OpenAI, Ollama, or OpenRouter through `AgentDockModel`.
+- [Tools](/docs/tools): Define focused, validated tools with Zod.
+- [Run and stream](/docs/runs): Run an agent or consume its events as they arrive.
+- [Approvals](/docs/approvals): Pause sensitive tools for approval and authorization checks.
+- [Sessions](/docs/sessions): Continue conversations and protect session access.
+- [Save sessions](/docs/checkpoints): Add in-memory or durable checkpoint storage.
+- [Context management](/docs/context-management): Summarize long conversations before they exceed a model limit.
+- [Events](/docs/events): Process Agentdock's normalized run and message events.
+- [API reference](/docs/api-reference): Review the `AgentDock` methods and options.
+
+## Packages
+
+- [`@agentdock-ai/agentdock`](https://github.com/agentdock-ai/agentdock/tree/main/packages/agentdock): Core runtime for agents, tools, runs, approvals, sessions, and streams.
+- [`@agentdock-ai/models`](https://github.com/agentdock-ai/agentdock/tree/main/packages/models): Application-facing model configuration for OpenAI, Ollama, and OpenRouter.
+- [`@agentdock-ai/contracts`](https://github.com/agentdock-ai/agentdock/tree/main/packages/contracts): Framework-independent event and data contracts.
+- [`@agentdock-ai/checkpoint`](https://github.com/agentdock-ai/agentdock/tree/main/packages/checkpoint): Checkpoint adapter contract and in-memory storage.
+- [`@agentdock-ai/checkpoint-sqlite`](https://github.com/agentdock-ai/agentdock/tree/main/packages/checkpoint-sqlite): SQLite persistence.
+- [`@agentdock-ai/checkpoint-postgres`](https://github.com/agentdock-ai/agentdock/tree/main/packages/checkpoint-postgres): PostgreSQL persistence.
+- [`@agentdock-ai/checkpoint-mongodb`](https://github.com/agentdock-ai/agentdock/tree/main/packages/checkpoint-mongodb): MongoDB persistence.
+- [`@agentdock-ai/checkpoint-redis`](https://github.com/agentdock-ai/agentdock/tree/main/packages/checkpoint-redis): Redis Stack persistence.
+- [Agentdock UI](https://github.com/agentdock-ai/agentdock-ui): Frontend components and hooks, coming soon.
+
+## Runtime requirements
+
+- Node.js 20 or later for the core runtime.
+- Node.js 22 or later for `@agentdock-ai/models`.
+- TypeScript applications with a server-side provider key.
