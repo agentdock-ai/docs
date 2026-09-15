@@ -4,10 +4,10 @@ import './global.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'AgentDock documentation',
-    template: '%s | AgentDock documentation',
+    default: 'AgentDock | TypeScript agent infrastructure',
+    template: '%s | AgentDock',
   },
-  description: 'Simple guides for installing and using AgentDock.',
+  description: 'Build streamed, tool-using agents with a clear TypeScript API.',
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
