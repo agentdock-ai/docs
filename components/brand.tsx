@@ -7,7 +7,7 @@ export function AgentDockBrand({ className = '' }: AgentDockBrandProps) {
     <span
       className={`agentdock-brand ${className}`.trim()}
       role="img"
-      aria-label="AgentDock"
+      aria-label="Agentdock"
     >
       <img
         className="agentdock-logo agentdock-logo-light"

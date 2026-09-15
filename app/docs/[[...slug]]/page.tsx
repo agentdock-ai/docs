@@ -42,8 +42,26 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
+  const canonicalPath = params.slug?.length
+    ? `/docs/${params.slug.join('/')}`
+    : '/docs';
+
   return {
     title: page.data.title,
     description: page.data.description,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      type: 'article',
+      title: page.data.title,
+      description: page.data.description,
+      url: canonicalPath,
+    },
+    twitter: {
+      card: 'summary',
+      title: page.data.title,
+      description: page.data.description,
+    },
   };
 }

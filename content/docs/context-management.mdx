@@ -16,7 +16,7 @@ const agent = createAgentDock({
 });
 ```
 
-With `trigger: "auto"`, AgentDock uses the primary model's context size. It starts summarizing at 75% and keeps the newest 25% of the conversation. Supported `AgentDockModel` models provide the context profile.
+With `trigger: "auto"`, Agentdock uses the primary model's context size. It starts summarizing at 75% and keeps the newest 25% of the conversation. Supported `AgentDockModel` models provide the context profile.
 
 ## Choose a different summary model
 
@@ -29,7 +29,7 @@ contextManagement: {
 }
 ```
 
-The summary model is optional. If you omit it, AgentDock uses the primary model.
+The summary model is optional. If you omit it, Agentdock uses the primary model.
 
 ## Set your own limits
 
@@ -44,4 +44,4 @@ contextManagement: {
 }
 ```
 
-`maxSteps` limits model calls in a run. It does not control conversation size. AgentDock keeps system instructions and recent messages when it summarizes. Your tool `ctx` is not added to the prompt.
+`maxSteps` limits model calls in a run. It does not control conversation size. Agentdock keeps system instructions and recent messages when it summarizes. Your tool `ctx` is not added to the prompt.

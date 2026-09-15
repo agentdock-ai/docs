@@ -3,7 +3,7 @@ title: Approvals
 description: Pause sensitive tools until your app approves them.
 ---
 
-Set `requiresApproval: true` on a tool that can make an external change. AgentDock pauses before it runs the tool and returns an approval request.
+Set `requiresApproval: true` on a tool that can make an external change. Agentdock pauses before it runs the tool and returns an approval request.
 
 ```ts
 const sendEmail = defineTool({
@@ -50,4 +50,4 @@ authorize: async ({ ctx }) =>
     : { allowed: false, reason: "This user cannot send email." },
 ```
 
-AgentDock checks authorization before asking for approval and again just before running the tool. The host app must still authenticate users and protect session access.
+Agentdock checks authorization before asking for approval and again just before running the tool. The host app must still authenticate users and protect session access.

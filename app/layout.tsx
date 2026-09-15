@@ -4,10 +4,47 @@ import './global.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'AgentDock | TypeScript agent infrastructure',
-    template: '%s | AgentDock',
+    default: 'Agentdock | TypeScript agent infrastructure',
+    template: '%s | Agentdock',
   },
-  description: 'Build streamed, tool-using agents with a clear TypeScript API.',
+  description:
+    'Build production-ready AI agents with a clear TypeScript API for models, typed tools, approvals, sessions, and streamed events.',
+  applicationName: 'Agentdock',
+  keywords: [
+    'Agentdock',
+    'TypeScript agents',
+    'AI agents',
+    'agent infrastructure',
+    'tool calling',
+    'LangGraph',
+  ],
+  authors: [{ name: 'Agentdock' }],
+  creator: 'Agentdock',
+  publisher: 'Agentdock',
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    title: 'Agentdock | TypeScript agent infrastructure',
+    description:
+      'Build production-ready AI agents with a clear TypeScript API for models, typed tools, approvals, sessions, and streamed events.',
+    siteName: 'Agentdock',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Agentdock | TypeScript agent infrastructure',
+    description:
+      'Build production-ready AI agents with a clear TypeScript API for models, typed tools, approvals, sessions, and streamed events.',
+  },
+  icons: {
+    icon: [{ url: '/icon.png', type: 'image/png' }],
+    apple: '/icon.png',
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

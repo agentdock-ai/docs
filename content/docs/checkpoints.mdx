@@ -1,9 +1,9 @@
 ---
 title: Save sessions
-description: Choose in-memory or durable storage for AgentDock sessions.
+description: Choose in-memory or durable storage for Agentdock sessions.
 ---
 
-AgentDock uses an in-memory checkpoint by default. It is useful for development and tests, but it does not survive a process restart.
+Agentdock uses an in-memory checkpoint by default. It is useful for development and tests, but it does not survive a process restart.
 
 For saved sessions, install one checkpoint adapter:
 
@@ -35,6 +35,6 @@ For `new AgentDock()`, pass the adapter as `checkpoint` instead of using `persis
 
 ## Close the agent
 
-When your app shuts down, call `await agent.close()`. AgentDock closes adapters passed as `checkpoint`. The host app still owns the database server and the rules for who can access each session.
+When your app shuts down, call `await agent.close()`. Agentdock closes adapters passed as `checkpoint`. The host app still owns the database server and the rules for who can access each session.
 
 Redis checkpoints require Redis Stack. A plain Redis server does not include the modules they need.

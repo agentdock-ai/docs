@@ -1,6 +1,6 @@
-# AgentDock documentation
+# Agentdock documentation
 
-The documentation website for AgentDock.
+The documentation website for Agentdock.
 
 ## Run it locally
 

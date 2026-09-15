@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: The main AgentDock classes, functions, and options.
+description: The main Agentdock classes, functions, and options.
 ---
 
 ## Create an agent
@@ -13,7 +13,7 @@ description: The main AgentDock classes, functions, and options.
 
 Both creation methods return an `AgentDock` instance.
 
-`createAgentDock()` also accepts `instructions`, `tools`, a shared `policy`, `persistence`, and `defaults`. It supports `middleware` and a custom `coordinator` for advanced integrations. Use `new AgentDock()` when you need a `ToolRegistry` or direct checkpoint setup. AgentDock closes checkpoint adapters passed as `checkpoint`; your app manages raw checkpoint savers.
+`createAgentDock()` also accepts `instructions`, `tools`, a shared `policy`, `persistence`, and `defaults`. It supports `middleware` and a custom `coordinator` for advanced integrations. Use `new AgentDock()` when you need a `ToolRegistry` or direct checkpoint setup. Agentdock closes checkpoint adapters passed as `checkpoint`; your app manages raw checkpoint savers.
 
 ## Run methods
 
@@ -52,7 +52,7 @@ Run results have one of four statuses: `completed`, `waiting_for_approval`, `fai
 
 - `initialize()` prepares the checkpoint adapter. It is usually called automatically before the first operation.
 - `stop(runId)` cancels an active run and returns `true`; it returns `false` if the run is not active.
-- `close({ gracePeriodMs? })` stops active runs and closes resources owned by AgentDock.
+- `close({ gracePeriodMs? })` stops active runs and closes resources owned by Agentdock.
 - `getUnfinishedRunIds()` lists runs still active when a close grace period ends.
 
 ## Common options
@@ -60,7 +60,7 @@ Run results have one of four statuses: `completed`, `waiting_for_approval`, `fai
 `AgentDock` requires a `model`. It also accepts:
 
 - `defaults`: default `systemPrompt` and `maxSteps` for runs.
-- `checkpoint`: an AgentDock checkpoint adapter. AgentDock owns and closes it.
+- `checkpoint`: an Agentdock checkpoint adapter. Agentdock owns and closes it.
 - `contextManagement`: optional conversation summarization settings.
 - `registry`: a `ToolRegistry` for advanced tool setup.
 

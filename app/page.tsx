@@ -5,7 +5,7 @@ export default function HomePage() {
   return (
     <main className="landing-page">
       <header className="landing-header">
-        <Link href="/" aria-label="AgentDock home">
+        <Link href="/" aria-label="Agentdock home">
           <AgentDockBrand className="agentdock-brand-landing" />
         </Link>
         <nav className="landing-nav" aria-label="Main navigation">
@@ -21,7 +21,7 @@ export default function HomePage() {
           <p className="landing-eyebrow">AGENT INFRASTRUCTURE FOR TYPESCRIPT</p>
           <h1>Build agents ready for real applications.</h1>
           <p className="landing-lede">
-            AgentDock gives your server a clear API for models, typed tools,
+            Agentdock gives your server a clear API for models, typed tools,
             approvals, sessions, persistence, and streamed events.
           </p>
           <div className="landing-actions">
@@ -35,7 +35,7 @@ export default function HomePage() {
           <p className="landing-meta">Open source · MIT licensed · Node.js 22+</p>
         </div>
 
-        <div className="landing-code-card" aria-label="AgentDock quickstart example">
+        <div className="landing-code-card" aria-label="Agentdock quickstart example">
           <div className="landing-code-topbar">
             <span className="landing-code-dots" aria-hidden="true">
               <i />
@@ -43,7 +43,7 @@ export default function HomePage() {
               <i />
             </span>
             <span>quickstart.ts</span>
-            <span className="landing-code-label">AgentDock</span>
+            <span className="landing-code-label">Agentdock</span>
           </div>
           <pre>
             <code>{`import { createAgentDock } from
@@ -102,7 +102,7 @@ const result = await agent.run(
       </section>
 
       <footer className="landing-footer">
-        <span>AgentDock documentation</span>
+        <span>Agentdock documentation</span>
         <span>Built for TypeScript applications</span>
       </footer>
     </main>

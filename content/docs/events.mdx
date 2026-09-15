@@ -1,6 +1,6 @@
 ---
 title: Events
-description: Read the normalized events AgentDock emits while a run is active.
+description: Read the normalized events Agentdock emits while a run is active.
 ---
 
 Await `agent.stream()` to get two values: `stream`, which gives you events as they happen, and `result`, which resolves to the final run result. Each event has a `type`, run and session IDs, a timestamp, and sequence numbers.
@@ -42,4 +42,4 @@ Message parts can also contain reasoning, media, files, citations, tool calls, t
 
 ## Check event versions
 
-Events include `protocolVersion`. Compare it with `AGENT_EVENT_PROTOCOL_VERSION` before processing if your app may receive events from a different AgentDock version. The `@agentdock-ai/contracts` package also exports `reduceAgentEvent()` to build a UI state from the stream.
+Events include `protocolVersion`. Compare it with `AGENT_EVENT_PROTOCOL_VERSION` before processing if your app may receive events from a different Agentdock version. The `@agentdock-ai/contracts` package also exports `reduceAgentEvent()` to build a UI state from the stream.
