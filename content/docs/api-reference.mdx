@@ -1,0 +1,67 @@
+---
+title: API reference
+description: The main AgentDock classes, functions, and options.
+---
+
+## Create an agent
+
+| API | Use it to |
+| --- | --- |
+| `createAgentDock(options)` | Create an agent with typed tools and an optional shared policy. Recommended for most apps. |
+| `defineTool(options)` | Define a tool with a Zod input schema. |
+| `new AgentDock(options)` | Create an agent when you need to register tools later or use advanced options. |
+
+Both creation methods return an `AgentDock` instance.
+
+`createAgentDock()` also accepts `instructions`, `tools`, a shared `policy`, `persistence`, and `defaults`. It supports `middleware` and a custom `coordinator` for advanced integrations. Use `new AgentDock()` when you need a `ToolRegistry` or direct checkpoint setup. AgentDock closes checkpoint adapters passed as `checkpoint`; your app manages raw checkpoint savers.
+
+## Run methods
+
+| Method | Result |
+| --- | --- |
+| `run(prompt, context, options)` | Promise with the final run result. |
+| `stream(prompt, context, options)` | Promise with an event stream and a promise for the final result. |
+| `resume(input, context, options)` | Continue a run that is waiting for approval. |
+| `resumeStream(input, context, options)` | Continue an approval-waiting run and stream its events. |
+
+Every run and resume needs a `sessionId`. `context` must be a JSON object.
+
+Run results have one of four statuses: `completed`, `waiting_for_approval`, `failed`, or `cancelled`.
+
+## Session methods
+
+| Method | What it does |
+| --- | --- |
+| `getSession(sessionId, options?)` | Read the current messages, or `null` if there are none. |
+| `getSessionHistory(sessionId, options?)` | Read the current session and its saved checkpoints. |
+| `deleteSession(sessionId, options?)` | Delete a session when it has no active run. |
+
+`getSession()` returns a session record with its messages, or `null` if there are none. Pass the same `sessionNamespace` to keep the session in the same app or tenant partition.
+
+## Tool methods
+
+| Method | What it does |
+| --- | --- |
+| `registerTool(tool)` | Add one tool to an existing agent. |
+| `registerTools(tools)` | Add several tools. |
+| `getTool(name)` | Read a registered tool. |
+| `getTools()` | List registered tools. |
+| `getToolSchemas()` | Read the tool schemas sent to the model. |
+
+## Lifecycle methods
+
+- `initialize()` prepares the checkpoint adapter. It is usually called automatically before the first operation.
+- `stop(runId)` cancels an active run and returns `true`; it returns `false` if the run is not active.
+- `close({ gracePeriodMs? })` stops active runs and closes resources owned by AgentDock.
+- `getUnfinishedRunIds()` lists runs still active when a close grace period ends.
+
+## Common options
+
+`AgentDock` requires a `model`. It also accepts:
+
+- `defaults`: default `systemPrompt` and `maxSteps` for runs.
+- `checkpoint`: an AgentDock checkpoint adapter. AgentDock owns and closes it.
+- `contextManagement`: optional conversation summarization settings.
+- `registry`: a `ToolRegistry` for advanced tool setup.
+
+Run options include `sessionId`, `runId`, `sessionNamespace`, `systemPrompt`, `maxSteps`, `toolTimeout`, `authorizationTimeout`, and `abortSignal`. See [runs](./runs) for their use.

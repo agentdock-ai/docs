@@ -1,0 +1,17 @@
+{
+  "title": "AgentDock",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "models",
+    "tools",
+    "runs",
+    "approvals",
+    "sessions",
+    "checkpoints",
+    "context-management",
+    "events",
+    "api-reference"
+  ]
+}

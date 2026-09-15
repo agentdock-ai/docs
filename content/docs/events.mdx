@@ -1,0 +1,45 @@
+---
+title: Events
+description: Read the normalized events AgentDock emits while a run is active.
+---
+
+Await `agent.stream()` to get two values: `stream`, which gives you events as they happen, and `result`, which resolves to the final run result. Each event has a `type`, run and session IDs, a timestamp, and sequence numbers.
+
+## Event types
+
+| Event | What it means |
+| --- | --- |
+| `run.started` | The run began. |
+| `message.started` | A user, assistant, or tool message began. |
+| `message.part.delta` | A message content part arrived. |
+| `message.completed` | A message finished. |
+| `tool.called` | The agent requested a tool. |
+| `tool.progress` | A tool reported progress. |
+| `tool.completed` | A tool returned a result. |
+| `tool.failed` | A tool failed. |
+| `interrupt.required` | The run is waiting for approval. |
+| `interrupt.resolved` | An approval decision was applied. |
+| `usage.updated` | Token usage or cost information arrived. |
+| `run.completed` | The run finished. |
+| `run.failed` | The run failed. |
+| `run.cancelled` | The run was cancelled. |
+
+## Read text as it arrives
+
+```ts
+const { stream, result } = await agent.stream(prompt, context, { sessionId });
+
+for await (const event of stream) {
+  if (event.type === "message.part.delta" && event.part.type === "text") {
+    showText(event.part.text);
+  }
+}
+
+const finalResult = await result;
+```
+
+Message parts can also contain reasoning, media, files, citations, tool calls, tool results, and custom JSON. Use the `type` field to handle each part.
+
+## Check event versions
+
+Events include `protocolVersion`. Compare it with `AGENT_EVENT_PROTOCOL_VERSION` before processing if your app may receive events from a different AgentDock version. The `@agentdock-ai/contracts` package also exports `reduceAgentEvent()` to build a UI state from the stream.

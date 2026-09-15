@@ -1,0 +1,53 @@
+---
+title: Approvals
+description: Pause sensitive tools until your app approves them.
+---
+
+Set `requiresApproval: true` on a tool that can make an external change. AgentDock pauses before it runs the tool and returns an approval request.
+
+```ts
+const sendEmail = defineTool({
+  name: "send_email",
+  description: "Send an email to a customer.",
+  input: z.object({ to: z.string(), subject: z.string(), body: z.string() }),
+  requiresApproval: true,
+  run: async (email) => emailService.send(email),
+});
+```
+
+## Approve or reject
+
+When the result status is `waiting_for_approval`, send a decision for each request back to the same session and run:
+
+```ts
+const waiting = await agent.run(prompt, context, { sessionId });
+
+if (waiting.status === "waiting_for_approval") {
+  const completed = await agent.resume(
+    {
+      runId: waiting.runId,
+      approvals: waiting.approvalRequests.map((request) => ({
+        approvalId: request.approvalId,
+        approved: true,
+      })),
+    },
+    context,
+    { sessionId },
+  );
+}
+```
+
+Set `approved` to `false` to reject a request. You can include a `reason` with either decision.
+
+## Check authorization too
+
+Approval asks a person to confirm an action. Authorization checks whether the user may perform it. Add an `authorize` function to a tool when access depends on the current user:
+
+```ts
+authorize: async ({ ctx }) =>
+  ctx.canSendEmail === true
+    ? { allowed: true }
+    : { allowed: false, reason: "This user cannot send email." },
+```
+
+AgentDock checks authorization before asking for approval and again just before running the tool. The host app must still authenticate users and protect session access.

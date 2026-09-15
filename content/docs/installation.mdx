@@ -1,0 +1,30 @@
+---
+title: Install AgentDock
+description: Add AgentDock, its model package, and Zod to a TypeScript app.
+---
+
+## 1. Install the packages
+
+```bash
+yarn add @agentdock-ai/agentdock @agentdock-ai/models zod
+```
+
+Use Node.js 22 or later when installing `@agentdock-ai/models`.
+
+## 2. Add your provider key
+
+For OpenAI, set `OPENAI_API_KEY` in the environment where your server runs. Keep the key on the server; do not expose it in browser code.
+
+```bash
+export OPENAI_API_KEY="your-key"
+```
+
+## 3. Import AgentDock's API
+
+```ts
+import { createAgentDock, defineTool } from "@agentdock-ai/agentdock";
+import { AgentDockModel } from "@agentdock-ai/models";
+import { z } from "zod";
+```
+
+Continue with the [quickstart](./quickstart). It creates a model, registers a tool, and runs the agent.

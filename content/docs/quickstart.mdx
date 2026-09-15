@@ -1,0 +1,49 @@
+---
+title: Quickstart
+description: Create a model, add one tool, and run your first AgentDock agent.
+---
+
+This example uses OpenAI. Set `OPENAI_API_KEY` before running it.
+
+## Create the agent
+
+```ts
+import { createAgentDock, defineTool } from "@agentdock-ai/agentdock";
+import { AgentDockModel } from "@agentdock-ai/models";
+import { z } from "zod";
+
+const weather = defineTool({
+  name: "get_weather",
+  description: "Get the weather for a city.",
+  input: z.object({ city: z.string() }),
+  run: async ({ city }) => ({ city, forecast: "Sunny" }),
+});
+
+const agent = createAgentDock({
+  model: AgentDockModel.openAI({ model: "gpt-5.4-mini" }),
+  instructions: "Answer clearly. Use the weather tool when it helps.",
+  tools: { weather },
+});
+```
+
+## Run it
+
+Every run needs a session ID and a JSON object for context.
+
+```ts
+const result = await agent.run(
+  "What is the weather in Lahore?",
+  { userId: "user-123" },
+  { sessionId: "session-123" },
+);
+
+const answer = result.content
+  .filter((part) => part.type === "text")
+  .map((part) => part.text)
+  .join("");
+
+console.log(answer);
+await agent.close();
+```
+
+`result.status` tells you whether the run completed, failed, was cancelled, or is waiting for tool approval. See [tools](./tools), [runs](./runs), and [approvals](./approvals) to continue.

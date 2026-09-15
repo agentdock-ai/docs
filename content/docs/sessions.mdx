@@ -1,0 +1,42 @@
+---
+title: Sessions
+description: Keep an agent's conversation across runs and control access to it.
+---
+
+Use the same `sessionId` to continue a conversation. Use a new ID to start a separate conversation.
+
+```ts
+const options = {
+  sessionId: "session-123",
+  sessionNamespace: "account-456",
+};
+
+await agent.run("Remember that I prefer email.", context, options);
+await agent.run("How should you contact me?", context, options);
+```
+
+`sessionNamespace` separates sessions when multiple apps or tenants share one checkpoint store. Keep it stable for the app and tenant that own the session.
+
+## Read a session
+
+```ts
+const session = await agent.getSession("session-123", {
+  sessionNamespace: "account-456",
+});
+```
+
+`getSession()` returns a session record with its current messages, or `null` when the session has no messages. Use `getSessionHistory()` to read the current session and each saved checkpoint.
+
+## Delete a session
+
+```ts
+await agent.deleteSession("session-123", {
+  sessionNamespace: "account-456",
+});
+```
+
+The session cannot be deleted while it has an active run.
+
+## Keep session access safe
+
+Authorize every run, resume, read, history, and delete request in your app. Never trust a session ID just because a client sent it. `ctx` is tool context; it does not grant access to a session.
