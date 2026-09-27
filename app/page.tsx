@@ -66,7 +66,7 @@ export default function HomePage() {
               <b>02</b> Open source
             </span>
             <span>
-              <b>03</b> Node.js 20+
+              <b>03</b> Node.js 22+
             </span>
           </div>
         </div>
