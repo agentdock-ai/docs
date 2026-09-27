@@ -1,0 +1,20 @@
+---
+title: HTTP ReAct example
+description: A small Node server using createAgent, tool context, and approved resume.
+---
+
+The complete sample lives in the repository's
+[`examples/react-agent`](https://github.com/agentdock-ai/agentdock/tree/main/examples/react-agent)
+directory. It creates the agent with LangChain `createAgent`, adds weather and
+email tools, and uses LangChain's human-in-the-loop middleware to pause before
+the email tool runs.
+
+The Node handler validates a small request body, derives `threadId` from trusted
+server identity plus a conversation ID, passes trusted context into the graph,
+and supports start and resume requests. The approval call uses the same
+authorized thread ID as the interrupted run.
+
+The sample uses OpenRouter and `MemorySaver` so it is easy to run locally.
+Replace its demo identity and logging mailer before exposing it, and use a
+durable LangGraph saver in production. The AgentDock layer does not provide
+authentication, authorization, model setup, or email delivery.

@@ -1,0 +1,47 @@
+---
+title: Migration
+description: Move from AgentDock's former all-in-one runtime to LangGraph and serveAgent.
+---
+
+The serving release narrows AgentDock to graph-to-event adaptation. Existing
+applications should move graph construction and infrastructure to LangChain,
+LangGraph, and their application code.
+
+## Core runtime
+
+Replace `new AgentDock({ model, ... })` with a LangChain `createAgent()` or a
+LangGraph `StateGraph`, then pass its compiled graph to `serveAgent(graph)`.
+Replace `defineTool()` with LangChain's `tool()` and register tools with the
+graph. Replace AgentDock provider factories with the provider's LangChain
+integration.
+
+| Former package/API                  | Replacement                                                                                          |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `@agentdock-ai/models`              | Provider packages such as `@langchain/openai`, `@langchain/openrouter`, or `@langchain/ollama`.      |
+| `@agentdock-ai/checkpoint`          | `MemorySaver` from `@langchain/langgraph` or a saver package for the selected store.                 |
+| `@agentdock-ai/checkpoint-sqlite`   | `@langchain/langgraph-checkpoint-sqlite`.                                                            |
+| `@agentdock-ai/checkpoint-postgres` | `@langchain/langgraph-checkpoint-postgres`.                                                          |
+| `@agentdock-ai/checkpoint-mongodb`  | `@langchain/langgraph-checkpoint-mongodb`.                                                           |
+| `@agentdock-ai/checkpoint-redis`    | `@langchain/langgraph-checkpoint-redis`.                                                             |
+| `AgentDock.run()` / `stream()`      | `runtime.stream(run)`, `runtime.pipe(response, run)`, or `runtime.toResponse(run)`.                  |
+| Session APIs                        | Own thread authorization and mapping in the application; persist graph state with a LangGraph saver. |
+| AgentDock approval hooks            | LangChain `humanInTheLoopMiddleware` or graph-specific LangGraph interrupts.                         |
+
+Install only integrations your application uses. Provider and saver package
+names above are maintained by their respective projects; check their current
+documentation for version and runtime requirements.
+
+## Event clients
+
+`@agentdock-ai/contracts` retains the event contract and reducer. Existing UI
+consumers can continue reducing the stream, provided the graph's event mapping
+matches the contract. For interruption/resume across requests, compose
+`agentEventStateSchema` into the graph's state schema and configure a
+checkpointer.
+
+## Ownership changes
+
+Your application now owns the provider credentials, tools, HTTP request parsing,
+authentication, authorization, saver lifecycle, and mapping from authenticated
+users/conversations to LangGraph thread IDs. AgentDock does not provide a
+security boundary around a graph or its side effects.

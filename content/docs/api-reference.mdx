@@ -1,68 +1,45 @@
 ---
 title: API reference
-description: The main Agentdock classes, functions, and options.
+description: Serving methods, input types, and event-state schema.
 ---
 
-## Create an agent
+## `serveAgent(graph, options?)`
 
-| API | Use it to |
-| --- | --- |
-| `defineTool(options)` | Define a tool with a Zod input schema. |
-| `new AgentDock(options)` | Create the AgentDock runtime. |
+Adapts a compiled LangGraph graph to a small runtime. Input and context types
+are inferred from the graph where LangGraph exposes them.
 
-`AgentDock` is the only agent construction API. Register tools with `registerTool()`
-or `registerTools()`, set the system prompt through `defaults.systemPrompt`, and
-pass a checkpoint adapter through `checkpoint`. Agentdock closes adapters passed as
-`checkpoint`; your app manages raw checkpoint savers.
+| Option           | Description                                      |
+| ---------------- | ------------------------------------------------ |
+| `recursionLimit` | Positive LangGraph step limit; defaults to `25`. |
 
-## Run methods
+## Runtime methods
 
-| Method | Result |
-| --- | --- |
-| `run(prompt, context, options)` | Promise with the final run result. |
-| `stream(prompt, context, options)` | Promise with an event stream and a promise for the final result. |
-| `resume(input, context, options)` | Continue a run that is waiting for approval. |
-| `resumeStream(input, context, options)` | Continue an approval-waiting run and stream its events. |
+| Method                | Description                                             |
+| --------------------- | ------------------------------------------------------- |
+| `stream(run)`         | Return the transport-free async event iterable.         |
+| `pipe(response, run)` | Write SSE events to a Node-compatible response.         |
+| `toResponse(run)`     | Return a Web `Response` with a cancelable event stream. |
 
-Every run and resume needs a `sessionId`. `context` must be a JSON object.
+Starts have `input`, `threadId`, optional `context`, and optional `signal`.
+Resumes have `resume`, the same authorized `threadId`, optional `context`, and
+optional `signal`. A run must contain exactly one of `input` or `resume`.
 
-Run results have one of four statuses: `completed`, `waiting_for_approval`, `failed`, or `cancelled`.
+## Event state
 
-## Session methods
+`agentEventStateSchema` is a composable LangGraph state schema extension for
+resumable AgentDock events. Use it with a checkpointer when a stream can pause
+for an interrupt and continue in a later request. It is not required for a
+simple, uninterrupted stream. AgentDock never creates or closes the saver.
 
-| Method | What it does |
-| --- | --- |
-| `getSession(sessionId, options?)` | Read the current messages, or `null` if there are none. |
-| `getSessionHistory(sessionId, options?)` | Read the current session and its saved checkpoints. |
-| `deleteSession(sessionId, options?)` | Delete a session when it has no active run. |
+## Ownership boundaries
 
-`getSession()` returns a session record with its messages, or `null` if there are none. Pass the same `sessionNamespace` to keep the session in the same app or tenant partition.
+- The application owns HTTP parsing, authentication, authorization, and
+  thread-ID derivation.
+- The application constructs the graph, configures provider credentials and
+  tools, and creates/closes checkpoint resources.
+- The graph owns tool policies, including approval and resume payloads.
+- AgentDock owns stream adaptation, event mapping, transport cancellation, and
+  the checkpoint-backed event continuity fields.
 
-## Tool methods
-
-| Method | What it does |
-| --- | --- |
-| `registerTool(tool)` | Add one tool to an existing agent. |
-| `registerTools(tools)` | Add several tools. |
-| `getTool(name)` | Read a registered tool. |
-| `getTools()` | List registered tools. |
-| `getToolSchemas()` | Read the tool schemas sent to the model. |
-
-## Lifecycle methods
-
-- `initialize()` prepares the checkpoint adapter. It is usually called automatically before the first operation.
-- `stop(runId)` cancels an active run and returns `true`; it returns `false` if the run is not active.
-- `close({ gracePeriodMs? })` stops active runs and closes resources owned by Agentdock.
-- `getUnfinishedRunIds()` lists runs still active when a close grace period ends.
-
-## Common options
-
-`AgentDock` requires a `model`. It also accepts:
-
-- `defaults`: default `systemPrompt` and `maxSteps` for runs.
-- `checkpoint`: an Agentdock checkpoint adapter. Agentdock owns and closes it.
-- `contextManagement`: optional conversation summarization settings.
-- `registry`: a `ToolRegistry` for registering tools during construction. Tools can
-  also be registered after construction with `registerTool()` or `registerTools()`.
-
-Run options include `sessionId`, `runId`, `sessionNamespace`, `systemPrompt`, `maxSteps`, `toolTimeout`, `authorizationTimeout`, and `abortSignal`. See [runs](./runs) for their use.
+The package does not expose an agent class, provider abstraction, tool
+registry, session API, or model/tool loop.

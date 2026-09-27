@@ -1,54 +1,50 @@
 ---
 title: Quickstart
-description: Create a model, add one tool, and run your first Agentdock agent.
+description: Build an agent with LangChain and expose its graph as an SSE endpoint.
 ---
 
-This example uses OpenAI. Set `OPENAI_API_KEY` before running it.
-
-## Create the agent
+This example uses LangChain `createAgent`; AgentDock does not construct or run
+the model/tool loop. Install a provider integration and set its credentials.
 
 ```ts
-import { AgentDock, ToolRegistry, defineTool } from "@agentdock-ai/agentdock";
-import { AgentDockModel } from "@agentdock-ai/models";
+import { agentEventStateSchema, serveAgent } from "@agentdock-ai/agentdock";
+import { ChatOpenRouter } from "@langchain/openrouter";
+import { MemorySaver } from "@langchain/langgraph";
+import { createAgent, tool } from "langchain";
 import { z } from "zod";
 
-const weather = defineTool({
+const weather = tool(async ({ city }) => ({ city, forecast: "Sunny" }), {
   name: "get_weather",
-  description: "Get the weather for a city.",
-  input: z.object({ city: z.string() }),
-  run: async ({ city }) => ({ city, forecast: "Sunny" }),
+  description: "Get the current weather for a city.",
+  schema: z.object({ city: z.string() }),
 });
 
-const registry = new ToolRegistry();
-registry.register(weather);
+const graph = createAgent({
+  model: new ChatOpenRouter({ model: "openai/gpt-4o-mini" }),
+  tools: [weather],
+  stateSchema: agentEventStateSchema,
+  checkpointer: new MemorySaver(),
+}).graph;
 
-const agent = new AgentDock({
-  model: AgentDockModel.openAI({ model: "gpt-5.4-mini" }),
-  defaults: {
-    systemPrompt: "Answer clearly. Use the weather tool when it helps.",
-  },
-  registry,
-});
+const runtime = serveAgent(graph);
 ```
 
-## Run it
-
-Every run needs a session ID and a JSON object for context.
+After your application authenticates and authorizes a request, pass an
+application-derived thread ID and graph input to the serving runtime:
 
 ```ts
-const result = await agent.run(
-  "What is the weather in Lahore?",
-  { userId: "user-123" },
-  { sessionId: "session-123" },
-);
-
-const answer = result.content
-  .filter((part) => part.type === "text")
-  .map((part) => part.text)
-  .join("");
-
-console.log(answer);
-await agent.close();
+await runtime.pipe(response, {
+  threadId: threadIdFromAuthorizedSession,
+  input: { messages: [{ role: "user", content: "Weather in Lahore?" }] },
+  context: { userId: authenticatedUser.id },
+});
 ```
 
-`result.status` tells you whether the run completed, failed, was cancelled, or is waiting for tool approval. See [tools](./tools), [runs](./runs), and [approvals](./approvals) to continue.
+`pipe()` writes Server-Sent Events to a Node response, honors backpressure, and
+aborts cooperative graph and tool work if the client disconnects. Use
+[`toResponse()`](./api-reference) for a Web `Response`, or [`stream()`](./events)
+when you want to consume events without a transport.
+
+`MemorySaver` is for development and single-process demonstrations. Use an
+appropriate LangGraph saver for durable production checkpoints, and manage its
+lifecycle in your application.
