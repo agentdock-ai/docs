@@ -4,14 +4,10 @@
     "index",
     "installation",
     "quickstart",
-    "models",
-    "tools",
-    "runs",
-    "approvals",
-    "sessions",
-    "checkpoints",
-    "context-management",
     "events",
+    "approvals",
+    "example",
+    "migration",
     "api-reference"
   ]
 }

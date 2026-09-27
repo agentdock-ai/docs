@@ -1,6 +1,8 @@
-# Agentdock documentation
+# AgentDock documentation
 
-The documentation website for Agentdock.
+The documentation website describes the serving adapter for compiled LangGraph
+graphs. Agent construction, model integrations, tools, checkpoint savers, and
+application security remain with LangChain, LangGraph, and the host application.
 
 ## Run it locally
 
@@ -20,8 +22,5 @@ npm run typecheck
 npm run build
 ```
 
-Documentation pages live in `content/docs` as MDX files.
-
-## Machine-readable documentation
-
-The site publishes a concise documentation map at [`/llms.txt`](https://agentdock-ai.vercel.app/llms.txt) and the complete reference at [`/llms-full.txt`](https://agentdock-ai.vercel.app/llms-full.txt). Singular aliases are also available at [`/llm.txt`](https://agentdock-ai.vercel.app/llm.txt) and [`/llm-full.txt`](https://agentdock-ai.vercel.app/llm-full.txt).
+Documentation pages live in `content/docs` as MDX files. Machine-readable
+references are published at `/llms.txt` and `/llms-full.txt`.

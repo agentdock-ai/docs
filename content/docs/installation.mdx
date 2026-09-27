@@ -1,33 +1,23 @@
 ---
-title: Install Agentdock
-description: Add Agentdock, its model package, and Zod to a TypeScript app.
+title: Installation
+description: Install AgentDock alongside LangGraph and your chosen LangChain provider.
 ---
 
-## 1. Install the packages
+AgentDock does not provide an agent loop, provider wrappers, tools, or checkpoint
+drivers. Install the LangChain and LangGraph integrations your application uses.
 
 ```bash
-yarn add @agentdock-ai/agentdock @agentdock-ai/models zod
+npm install @agentdock-ai/agentdock @agentdock-ai/contracts \
+  @langchain/core @langchain/langgraph langchain zod
 ```
 
-Use Node.js 22 or later when installing `@agentdock-ai/models`.
+Install your model provider integration and checkpoint saver separately. For
+the OpenRouter example, also install `@langchain/openrouter`. Node.js 20 or later
+is required by AgentDock.
 
-## 2. Add your provider key
+## Compatibility
 
-For OpenAI, set `OPENAI_API_KEY` in the environment where your server runs. Keep the key on the server; do not expose it in browser code.
-
-```bash
-export OPENAI_API_KEY="your-key"
-```
-
-## 3. Import Agentdock's API
-
-```ts
-import { AgentDock, defineTool } from "@agentdock-ai/agentdock";
-import { AgentDockModel } from "@agentdock-ai/models";
-import { z } from "zod";
-```
-
-Continue with the [quickstart](./quickstart). It creates a model, registers a tool, and runs the agent.
-
-`AgentDock` is the only agent construction API. `defineTool()` creates a typed tool
-definition; it does not create another agent runtime.
+Pass a compiled LangGraph graph to `serveAgent`. The graph must support
+`stream()`, `getState()`, and `updateState()`. To safely resume an interrupted
+stream across requests, compose `agentEventStateSchema` into the graph's state
+schema and configure a LangGraph checkpointer.
