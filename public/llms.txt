@@ -7,12 +7,14 @@ authorization, and checkpointer lifecycle.
 ## Documentation
 
 - [Install](https://agentdock-ai.vercel.app/docs/installation): dependencies and graph compatibility.
-- [Quickstart](https://agentdock-ai.vercel.app/docs/quickstart): createAgent and serveAgent.
+- [Quickstart](https://agentdock-ai.vercel.app/docs/quickstart): createAgent and Agentdock.
 - [Interrupt and resume](https://agentdock-ai.vercel.app/docs/approvals): approval middleware and checkpointed continuation.
 - [Events](https://agentdock-ai.vercel.app/docs/events): streaming and event reducer.
 - [HTTP ReAct example](https://agentdock-ai.vercel.app/docs/example): Node server and tools.
 - [API reference](https://agentdock-ai.vercel.app/docs/api-reference): serving methods and ownership.
 - [Migration](https://agentdock-ai.vercel.app/docs/migration): move from the former AgentDock runtime APIs.
+
+- [Agentdock UI](https://agentdock-ai.vercel.app/docs/ui): editable React components and local installer setup.
 
 ## Packages
 
@@ -20,3 +22,5 @@ authorization, and checkpointer lifecycle.
 - [`@agentdock-ai/contracts`](https://www.npmjs.com/package/@agentdock-ai/contracts): event contract and reducer.
 
 Use LangChain provider integrations and LangGraph checkpoint savers directly.
+
+Agentdock UI packages are implemented locally; publishing is a separate release step.

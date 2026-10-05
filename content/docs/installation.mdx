@@ -17,7 +17,11 @@ is required by AgentDock.
 
 ## Compatibility
 
-Pass a compiled LangGraph graph to `serveAgent`. The graph must support
-`stream()`, `getState()`, and `updateState()`. To safely resume an interrupted
-stream across requests, compose `agentEventStateSchema` into the graph's state
-schema and configure a LangGraph checkpointer.
+Pass a compiled LangGraph graph to `new Agentdock(graph)`. It must support
+`stream()` and `getState()`. Use LangGraph 1.4.17 or newer for native lifecycle
+callbacks. No Agentdock state schema or serving metadata is required.
+
+Configure a LangGraph checkpointer when you need saved conversations or
+interrupt/resume across requests. Agentdock reads native pending tasks and never
+calls `updateState()` to persist event bookkeeping. Your application creates and
+closes the saver.

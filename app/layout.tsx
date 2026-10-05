@@ -3,24 +3,25 @@ import type { Metadata } from "next";
 import "./global.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://agentdock-ai.vercel.app"),
   title: {
-    default: "AgentDock | LangGraph serving adapter",
-    template: "%s | AgentDock",
+    default: "Agentdock | From agent to application",
+    template: "%s | Agentdock",
   },
   description:
-    "Serve compiled LangGraph agents through a small TypeScript API for SSE, event mapping, and cancellation.",
-  applicationName: "AgentDock",
+    "Connect your LangGraph agent to your application with TypeScript streaming and editable React chat components.",
+  applicationName: "Agentdock",
   keywords: [
-    "AgentDock",
+    "Agentdock",
     "TypeScript agents",
     "AI agents",
     "agent infrastructure",
     "tool calling",
     "LangGraph",
   ],
-  authors: [{ name: "AgentDock" }],
-  creator: "AgentDock",
-  publisher: "AgentDock",
+  authors: [{ name: "Agentdock" }],
+  creator: "Agentdock",
+  publisher: "Agentdock",
   robots: {
     index: true,
     follow: true,
@@ -30,16 +31,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    title: "AgentDock | LangGraph serving adapter",
+    title: "Agentdock | From agent to application",
     description:
-      "Serve compiled LangGraph agents through a small TypeScript API for SSE, event mapping, and cancellation.",
-    siteName: "AgentDock",
+      "Connect your LangGraph agent to your application with TypeScript streaming and editable React chat components.",
+    siteName: "Agentdock",
   },
   twitter: {
     card: "summary",
-    title: "AgentDock | LangGraph serving adapter",
+    title: "Agentdock | From agent to application",
     description:
-      "Serve compiled LangGraph agents through a small TypeScript API for SSE, event mapping, and cancellation.",
+      "Connect your LangGraph agent to your application with TypeScript streaming and editable React chat components.",
   },
   icons: {
     icon: [{ url: "/icon.png", type: "image/png" }],
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
         <RootProvider>{children}</RootProvider>
       </body>

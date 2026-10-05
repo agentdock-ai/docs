@@ -7,7 +7,7 @@ This example uses LangChain `createAgent`; AgentDock does not construct or run
 the model/tool loop. Install a provider integration and set its credentials.
 
 ```ts
-import { agentEventStateSchema, serveAgent } from "@agentdock-ai/agentdock";
+import { Agentdock } from "@agentdock-ai/agentdock";
 import { ChatOpenRouter } from "@langchain/openrouter";
 import { MemorySaver } from "@langchain/langgraph";
 import { createAgent, tool } from "langchain";
@@ -22,11 +22,10 @@ const weather = tool(async ({ city }) => ({ city, forecast: "Sunny" }), {
 const graph = createAgent({
   model: new ChatOpenRouter({ model: "openai/gpt-4o-mini" }),
   tools: [weather],
-  stateSchema: agentEventStateSchema,
   checkpointer: new MemorySaver(),
 }).graph;
 
-const runtime = serveAgent(graph);
+const runtime = new Agentdock(graph);
 ```
 
 After your application authenticates and authorizes a request, pass an
@@ -42,7 +41,7 @@ await runtime.pipe(response, {
 
 `pipe()` writes Server-Sent Events to a Node response, honors backpressure, and
 aborts cooperative graph and tool work if the client disconnects. Use
-[`toResponse()`](./api-reference) for a Web `Response`, or [`stream()`](./events)
+[`toResponse()`](/docs/api-reference) for a Web `Response`, or [`stream()`](/docs/events)
 when you want to consume events without a transport.
 
 `MemorySaver` is for development and single-process demonstrations. Use an

@@ -1,19 +1,18 @@
 ---
 title: Events
-description: Consume AgentDock events and reduce them into UI state.
+description: Consume the shared Agentdock event contract and reduce it into UI state.
 ---
 
 `runtime.stream(run)` returns an async iterable of JSON-safe `AgentEvent`
-objects. `runtime.pipe(response, run)` encodes the same events as
-Server-Sent Events; `runtime.toResponse(run)` exposes them in a Web `Response`.
-All event types and reducer utilities are exported from
-`@agentdock-ai/contracts` and re-exported from `@agentdock-ai/agentdock`.
+objects. `pipe()` encodes those events as SSE and `toResponse()` exposes them
+in a Web `Response`. Import event types and reducer utilities from
+`@agentdock-ai/contracts`.
 
 ```ts
 import {
   createAgentReducerState,
   reduceAgentEvent,
-} from "@agentdock-ai/agentdock";
+} from "@agentdock-ai/contracts";
 
 let state = createAgentReducerState();
 for await (const event of runtime.stream(run)) {
@@ -22,12 +21,19 @@ for await (const event of runtime.stream(run)) {
 }
 ```
 
-The contract covers run lifecycle, assistant text, tool calls and results,
-interrupts, and errors. Chunks that cannot be mapped to those contract types
-are exposed as custom content/events where supported. The application or UI
-owns rendering and any persistence of reduced state.
+The contract covers run lifecycle, messages and content deltas, tool calls,
+progress and results, interrupts, usage, errors, and cancellation. Event names
+use dots: for example, `run.started`, `message.part.delta`, `tool.completed`,
+`interrupt.required`, and `run.completed`. Arbitrary graph output remains
+application-specific.
 
-For interrupted runs that continue in a later request, add
-`agentEventStateSchema` to the graph schema and use a LangGraph checkpointer.
-The runtime stores only the minimal checkpointed event identity, sequence, and
-pending interrupt ID needed to continue the contract.
+Each invocation has a fresh `runId` and sequence starting at 1. Treat native
+message and tool identifiers as opaque correlation values. Apply resumed
+invocation events to the existing reducer state, or hydrate pending native
+control state using `runtime.getResumeState(threadId)`, whose seed has
+`runId: null`. Load history separately with `runtime.getMessages(threadId)`.
+
+Agentdock does not write event bookkeeping to graph checkpoints. No state schema
+extension is required. The application owns rendering and persistence of reduced
+state. [Agentdock UI](/docs/ui) provides a React store and editable chat components
+for consumers of this same contract.

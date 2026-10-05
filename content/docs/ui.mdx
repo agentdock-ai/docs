@@ -1,0 +1,109 @@
+---
+title: Agentdock UI
+description: Editable React chat components connected through your application's adapter.
+---
+
+Agentdock UI adds a chat interface to your Agentdock application. Its CLI copies
+small, editable components into `components/agentdock-ui`. The
+`@agentdock-ai/react` package provides a store, hooks, event decoding, and the
+render model. Your application owns network requests and authentication.
+
+The UI is implemented locally. Publishing the packages and installer is a
+separate release step; `npx agentdock-ui add chat` is the intended released
+command. Until then, follow the local checkout instructions below.
+
+## Build and install from the checkout
+
+Clone the [UI repository](https://github.com/agentdock-ai/agentdock-ui), then run
+these commands from its root with Node.js 22 or later:
+
+```sh
+yarn install
+yarn build:packages
+yarn registry:build
+yarn cli:build
+node packages/cli/dist/index.js add chat --cwd /path/to/app --yes
+```
+
+The host application needs React, TypeScript, Tailwind CSS 4, a resolvable
+TypeScript alias, and shadcn semantic tokens. An existing `components.json`
+selects Radix or Base UI primitives. The installer can create a missing
+configuration from an existing host theme and alias.
+
+Use `--dry-run` to inspect changes. Repeated installs preserve edited source.
+`--overwrite` explicitly replaces consumer edits.
+
+## Connect your adapter
+
+`Chat` has no endpoint prop. Supply a stable `ChatAdapter` whose `sendMessage`
+yields canonical Agentdock events. The request body below is an example of an
+application-owned API, not a built-in Agentdock envelope.
+
+```tsx
+import { Chat } from "@/components/agentdock-ui/chat";
+import { decodeAgentEventStream, type ChatAdapter } from "@agentdock-ai/react";
+
+export function createChatAdapter({
+  endpoint,
+  threadId,
+  request,
+}: {
+  endpoint: string;
+  threadId: string;
+  request: typeof fetch;
+}): ChatAdapter {
+  return {
+    async *sendMessage({ text, signal }) {
+      const response = await request(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: text, threadId }),
+        signal,
+      });
+      if (!response.ok || !response.body) throw new Error("Request failed.");
+      yield* decodeAgentEventStream(response.body, { signal });
+    },
+  };
+}
+
+// Construct once for the app's current conversation.
+<Chat adapter={chatAdapter} />;
+```
+
+Your server validates requests, authorizes and derives thread identity, then
+calls `runtime.pipe()` or `runtime.toResponse()`. Browser consumers receive the
+canonical event contract; normalize provider and LangGraph events on the server.
+
+## Supported experiences
+
+The panel includes safe Markdown, streaming, optional reasoning, compact tool
+disclosures, approvals, scoped errors, cancellation, an anchored composer, and
+scroll-to-latest. Light and dark styles inherit host semantic tokens.
+
+Provide `respondToInterrupt`, `continueRun`, and `cancelRun` only when your
+application supports them. Approval values stay opaque and are returned unchanged.
+Optional `adapter.attachments` enables file/image selection, previews, upload
+status, retry, and removal. Your application owns storage, permissions, limits,
+and conversion into model input.
+
+## Restore conversations
+
+Load and normalize saved messages in the consuming app, then hydrate a fresh
+store before streaming:
+
+```tsx
+import { AgentStore } from "@agentdock-ai/react";
+
+const store = new AgentStore();
+store.hydrateHistory({ messages: normalizedMessages, resumeState });
+<Chat adapter={chatAdapter} store={store} />;
+```
+
+Messages use canonical `messageId`, `role`, and `content`. Optional `resumeState`
+is a fresh native waiting-state seed, such as `runtime.getResumeState(threadId)`,
+with `runId: null`. The adapter targets your authorized thread for approvals and
+static continuation. Hydration is rejected during active execution.
+
+For a custom interface, use `AgentProvider`, `AgentStore`, `useAgentState`,
+`useAgentStore`, `useAgentActions`, and `selectRenderModel`. See the
+[UI README](https://github.com/agentdock-ai/agentdock-ui#readme) for the full surface.

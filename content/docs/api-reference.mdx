@@ -1,45 +1,74 @@
 ---
 title: API reference
-description: Serving methods, input types, and event-state schema.
+description: Agentdock construction, streaming, checkpoint reads, and run options.
 ---
 
-## `serveAgent(graph, options?)`
+## `new Agentdock(graph, options?)`
 
-Adapts a compiled LangGraph graph to a small runtime. Input and context types
-are inferred from the graph where LangGraph exposes them.
+Adapts a compiled LangGraph graph to the Agentdock event contract. Input and
+context types are inferred from the graph where LangGraph exposes them.
 
-| Option           | Description                                      |
-| ---------------- | ------------------------------------------------ |
-| `recursionLimit` | Positive LangGraph step limit; defaults to `25`. |
+```ts
+import { Agentdock } from "@agentdock-ai/agentdock";
+const runtime = new Agentdock(graph);
+```
 
-## Runtime methods
+| Option            | Description                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recursionLimit`  | Optional positive safe integer override. Otherwise LangGraph resolves its configured limit.                                                               |
+| `interruptFormat` | `"opaque"` (default) or `"langchain-hitl"` for native LangChain approval presentation.                                                                    |
+| `validateResume`  | Optional application preflight hook `(resumeValue, pendingInterrupts, currentContext)`. May be asynchronous; runs before graph invocation or SSE headers. |
+| `onError`         | Optional server diagnostic callback `(error, { threadId, runId, stage })`. Stage is `graph`, `mapper`, or `checkpoint`; client errors remain sanitized.   |
 
-| Method                | Description                                             |
-| --------------------- | ------------------------------------------------------- |
-| `stream(run)`         | Return the transport-free async event iterable.         |
-| `pipe(response, run)` | Write SSE events to a Node-compatible response.         |
-| `toResponse(run)`     | Return a Web `Response` with a cancelable event stream. |
+## Streaming methods
 
-Starts have `input`, `threadId`, optional `context`, and optional `signal`.
-Resumes have `resume`, the same authorized `threadId`, optional `context`, and
-optional `signal`. A run must contain exactly one of `input` or `resume`.
+| Method                | Description                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| `stream(run)`         | Return the transport-free async event iterable.                                               |
+| `pipe(response, run)` | Write SSE events to a Node-compatible response with backpressure and disconnect cancellation. |
+| `toResponse(run)`     | Return a promise for a Web `Response` with a cancelable event stream.                         |
 
-## Event state
+A run has an authorized `threadId` and one of these forms:
 
-`agentEventStateSchema` is a composable LangGraph state schema extension for
-resumable AgentDock events. Use it with a checkpointer when a stream can pause
-for an interrupt and continue in a later request. It is not required for a
-simple, uninterrupted stream. AgentDock never creates or closes the saver.
+- Start: `{ threadId, input }`.
+- Resume a dynamic interrupt: `{ threadId, resume }`.
+- Continue a static breakpoint: `{ threadId, continue: true }`.
+
+All forms accept optional `context`, `signal`, and `config`. `config` forwards
+LangGraph options such as callbacks, tags, metadata, store, and additional
+configurable values. Agentdock overwrites `configurable.thread_id` with the
+authorized `threadId`. Context, signal, stream modes, and recursion are controlled
+by serving; configure a recursion override in the constructor.
+
+Resume values are forwarded to LangGraph unchanged. For multiple pending
+interrupts, use a map keyed by their native IDs. See [interrupt and resume](/docs/approvals).
+
+## Checkpoint reads
+
+| Method                                          | Description                                                                                                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getMessages(threadId, { channel?, config? }?)` | Read a checkpoint message channel; defaults to `messages`. Returns `unknown[]` or `null` when there is no checkpoint. Normalize provider messages in your application. |
+| `getResumeState(threadId, config?)`             | Project pending native interrupts or static breakpoints into a reducer seed, or return `null` when no work is pending. Invalid projections throw.                      |
+
+The resume seed has `runId: null` and preserves pending native IDs and complete
+payloads. Load conversation history separately. Authorize checkpoint reads as
+well as writes and continuations.
+
+No Agentdock graph state schema is required. Agentdock reads native checkpoint
+control state and never writes event bookkeeping into graph state. Each invocation
+gets a fresh `runId` with sequence starting at 1.
+
+## Contracts and validation
+
+Import event types, reducers, and validation utilities from
+`@agentdock-ai/contracts`. The core package exports `Agentdock`, serving types,
+and `validateToolApprovalResume`. This helper checks the LangChain HITL response
+envelope and action count; application and native middleware policies still own
+permissions.
 
 ## Ownership boundaries
 
-- The application owns HTTP parsing, authentication, authorization, and
-  thread-ID derivation.
-- The application constructs the graph, configures provider credentials and
-  tools, and creates/closes checkpoint resources.
-- The graph owns tool policies, including approval and resume payloads.
-- AgentDock owns stream adaptation, event mapping, transport cancellation, and
-  the checkpoint-backed event continuity fields.
-
-The package does not expose an agent class, provider abstraction, tool
-registry, session API, or model/tool loop.
+Your application owns routes, request parsing, authentication, authorization,
+thread identity, context, side effects, provider setup, and saver lifecycle.
+LangChain and LangGraph own agent execution, tools, models, retries, checkpoints,
+interrupts, and resume. Agentdock owns event mapping and serving mechanics.

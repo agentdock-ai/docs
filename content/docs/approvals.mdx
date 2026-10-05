@@ -1,26 +1,36 @@
 ---
 title: Interrupt and resume
-description: Use LangChain human-in-the-loop middleware and resume through a later request.
+description: Use native LangChain approvals and continue through a later authorized request.
 ---
 
-AgentDock forwards resume values to LangGraph. Approval policy remains inside
-the graph, where LangChain's `humanInTheLoopMiddleware` can interrupt a selected
-tool before it executes.
+Approval policy remains inside the graph. LangChain's
+`humanInTheLoopMiddleware` can interrupt a selected tool before it executes.
+Use an ordinary graph schema with a LangGraph checkpointer.
 
 ```ts
-import { humanInTheLoopMiddleware } from "langchain";
+import { Agentdock, validateToolApprovalResume } from "@agentdock-ai/agentdock";
+import { createAgent, humanInTheLoopMiddleware } from "langchain";
 
 const graph = createAgent({
   model,
   tools: [sendEmail],
   checkpointer,
-  stateSchema: agentEventStateSchema,
   middleware: [humanInTheLoopMiddleware({ interruptOn: { send_email: true } })],
 }).graph;
+
+const runtime = new Agentdock(graph, {
+  interruptFormat: "langchain-hitl",
+  validateResume: validateToolApprovalResume,
+});
 ```
 
-When the stream emits `interrupt_required`, present the pending action to the
-authorized user. On approval, make a new request with the same server-derived
+`interruptFormat` selects LangChain HITL presentation; generic interrupts stay
+opaque by default. The optional validator checks the response envelope and the
+number of actions. It does not enforce the user's permissions. Supply your own
+validator when current application context changes the approval batch or policy.
+
+When the stream emits `interrupt.required`, present the pending action to the
+authorized user. Make a new authorized request with the same server-derived
 `threadId` and the resume payload expected by the graph:
 
 ```ts
@@ -31,8 +41,25 @@ await runtime.pipe(response, {
 });
 ```
 
-The checkpointer and `agentEventStateSchema` preserve event identity and
-sequence across requests. AgentDock does not validate the user's authority to
-approve a tool: enforce that in the application before sending the resume
-command. Configure a durable saver when an interrupt must survive process
-restarts or run across multiple server instances.
+For multiple pending interrupts, target native IDs:
+
+```ts
+await runtime.pipe(response, {
+  threadId: authorizedThreadId,
+  context: trustedContext,
+  resume: { [interruptId]: { decisions: [{ type: "approve" }] } },
+});
+```
+
+Native checkpoint tasks hold pending work. No serving state fields are required.
+Every invocation gets a fresh run ID; reduce continuation events into the existing
+client state, or use `runtime.getResumeState(threadId)` to hydrate a fresh client.
+Load conversation history separately with `runtime.getMessages(threadId)`.
+
+Continue a static `interruptBefore` or `interruptAfter` breakpoint with
+`{ threadId: authorizedThreadId, continue: true }`. Dynamic interrupts require
+`resume`. The `run.paused` event marks a static breakpoint or a continuation
+that still has pending interrupts.
+
+Authorize every approval in the application. Use a durable LangGraph saver for
+process restarts or multiple server instances, and manage its lifecycle yourself.

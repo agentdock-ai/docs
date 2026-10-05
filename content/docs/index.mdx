@@ -11,17 +11,19 @@ LangChain and LangGraph build and run the agent. Your application owns model
 providers, tools, identity, authorization, checkpoint storage, and HTTP request
 handling.
 
-The value bar is intentionally narrow: with the same application setup,
-`serveAgent` should reduce the endpoint-specific handler to five lines or fewer
-while handling event mapping, SSE framing, backpressure, disconnect cancellation,
-terminal errors, and response cleanup.
+The `Agentdock` class handles event mapping, SSE framing, backpressure,
+disconnect cancellation, terminal errors, and response cleanup. Call it from
+your application's route controllers.
+
+[Agentdock UI](/docs/ui) adds editable React chat components and an app-owned adapter
+on top of the same event contract. Use the UI or build your own interface.
 
 ## Start here
 
-1. [Install the packages](./installation).
-2. [Build and serve an agent](./quickstart) with `createAgent`.
-3. Learn how [interrupt and resume](./approvals) works across requests.
-4. Review [events](./events) or the [API reference](./api-reference).
+1. [Install the packages](/docs/installation).
+2. [Build and serve an agent](/docs/quickstart) with `createAgent`.
+3. Learn how [interrupt and resume](/docs/approvals) works across requests.
+4. Review [events](/docs/events) or the [API reference](/docs/api-reference).
 
-The [HTTP ReAct example](./example) combines a weather tool, an approval-gated
+The [HTTP ReAct example](/docs/example) combines a weather tool, an approval-gated
 email tool, request validation, trusted context, and a server-derived thread ID.

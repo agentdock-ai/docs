@@ -1,55 +1,70 @@
-# AgentDock full documentation
+# Agentdock
 
-AgentDock is a small TypeScript adapter for serving a compiled LangGraph graph
-as AgentDock contract events. LangChain and LangGraph own agent construction,
-model/tool orchestration, approval middleware, and checkpointing. The
-application owns HTTP parsing, authentication, authorization, tool side effects,
-and checkpointer lifecycle.
+Agentdock connects a compiled LangGraph agent to an application through a
+canonical event contract and streaming transports. LangChain and LangGraph own
+execution, models, tools, checkpoints, interrupts, and resume. Applications own
+routes, requests, authentication, authorization, thread identity, context, side
+effects, providers, and saver lifecycle.
 
-## Install
+## Install and serve
 
-```bash
-npm install @agentdock-ai/agentdock @agentdock-ai/contracts \
-  @langchain/core @langchain/langgraph langchain zod
-```
+Requires Node.js 22+ and LangGraph 1.4.17+.
 
-Install the provider integration and checkpoint saver your application uses.
-The OpenRouter example uses `@langchain/openrouter`.
+npm install @agentdock-ai/agentdock @agentdock-ai/contracts @langchain/core @langchain/langgraph langchain zod
 
-## Build and serve an agent
+Install the chosen provider integration separately, for example @langchain/openrouter.
 
 ```ts
-import { agentEventStateSchema, serveAgent } from "@agentdock-ai/agentdock";
+import { Agentdock } from "@agentdock-ai/agentdock";
 import { ChatOpenRouter } from "@langchain/openrouter";
 import { MemorySaver } from "@langchain/langgraph";
-import { createAgent, tool } from "langchain";
-import { z } from "zod";
-
-const weather = tool(
-  async ({ city }) => ({ city, forecast: "Sunny" }),
-  {
-    name: "get_weather",
-    description: "Get current weather.",
-    schema: z.object({ city: z.string() }),
-  },
-);
+import { createAgent } from "langchain";
 
 const graph = createAgent({
   model: new ChatOpenRouter({ model: "openai/gpt-4o-mini" }),
-  tools: [weather],
-  stateSchema: agentEventStateSchema,
+  tools: [],
   checkpointer: new MemorySaver(),
 }).graph;
-
-const runtime = serveAgent(graph);
+const runtime = new Agentdock(graph);
 await runtime.pipe(response, {
   threadId: authorizedThreadId,
-  input: { messages: [{ role: "user", content: "Weather in Lahore?" }] },
-  context: { userId: authenticatedUser.id },
+  input: { messages: [{ role: "user", content: prompt }] },
+  context: trustedContext,
 });
 ```
 
-Use the same authorized thread ID to resume an interrupt:
+No Agentdock state schema is required. Agentdock reads native pending tasks and
+never writes event bookkeeping into graph state. MemorySaver is for development;
+use a durable LangGraph saver in production and manage its lifecycle in the app.
+
+## API
+
+- new Agentdock(graph, options?) creates a runtime.
+- Options: recursionLimit override; interruptFormat (opaque default or langchain-hitl);
+  validateResume preflight hook; onError server diagnostics.
+- runtime.stream(run) returns an async iterable of canonical contract events.
+- runtime.pipe(nodeResponse, run) writes SSE with backpressure and disconnect cancellation.
+- runtime.toResponse(run) returns a promise for a cancelable Web Response.
+- runtime.getMessages(threadId, { channel?, config? }?) reads native checkpoint messages.
+- runtime.getResumeState(threadId, config?) projects pending native control state,
+  or returns null; invalid projections throw. A seed has runId: null.
+- Starts: { threadId, input }. Dynamic resumes: { threadId, resume }.
+  Static continuations: { threadId, continue: true }.
+- Every form accepts optional context, signal, and config. Config forwards native
+  callbacks, tags, metadata, store, and extra configurable values. Serving controls
+  stream modes and overwrites configurable.thread_id with the authorized thread.
+- Contract types, reducers, and validators come from @agentdock-ai/contracts,
+  not from the core package.
+- Every invocation has a fresh runId and sequence starting at 1.
+
+## Interrupt and resume
+
+Use LangChain humanInTheLoopMiddleware or native LangGraph interrupts with a
+checkpointer. For LangChain approval presentation, construct Agentdock with
+interruptFormat: "langchain-hitl". The optional validateToolApprovalResume helper
+checks the response envelope/action count, not authority.
+
+Listen for interrupt.required and authorize the user before continuation.
 
 ```ts
 await runtime.pipe(response, {
@@ -59,28 +74,39 @@ await runtime.pipe(response, {
 });
 ```
 
-`MemorySaver` is for local demonstrations. Use a durable LangGraph saver in
-production. The application creates and closes that saver. A client-provided
-thread identifier must be authorized and mapped to a server-side LangGraph
-thread ID before passing it to AgentDock.
+Target native interrupt IDs for multiple pending interrupts:
+resume: { [interruptId]: { decisions: [{ type: "approve" }] } }.
+A static breakpoint emits run.paused; continue it with continue: true.
+Hydrate pending control state with getResumeState and load history separately.
 
-## API
+## Agentdock UI
 
-- `serveAgent(graph, { recursionLimit? })` creates a runtime.
-- `runtime.stream(run)` returns an async iterable of contract events.
-- `runtime.pipe(nodeResponse, run)` writes Server-Sent Events.
-- `runtime.toResponse(run)` returns a Web `Response` with a cancelable stream.
-- `agentEventStateSchema` adds the small checkpointed event fields needed for
-  event continuity after an interrupt/resume.
-- Contract types and reducers are exported by `@agentdock-ai/contracts` and
-  re-exported by `@agentdock-ai/agentdock`.
+Agentdock UI provides editable React chat source and the @agentdock-ai/react
+store/hooks/event decoder. Your stable app-owned ChatAdapter supplies sendMessage
+and optional respondToInterrupt, cancelRun, continueRun, and attachments.
+Chat has no endpoint prop. Authentication, request construction, thread identity,
+attachment storage, and business rules stay in the consuming app.
 
-AgentDock does not provide an `AgentDock` class, model wrapper, tool registry,
-session API, agent loop, or checkpoint adapter.
+The UI supports streaming, Markdown, tools, approvals, cancellation, saved history,
+and optional files/images. It inherits host shadcn semantic tokens and supports
+Radix or Base UI. Requires React, TypeScript, Tailwind CSS 4, and an alias.
+
+UI packages and installer are implemented locally; publication is a separate step.
+Build the UI checkout with yarn install, yarn build:packages, yarn registry:build,
+and yarn cli:build, then run:
+node packages/cli/dist/index.js add chat --cwd /path/to/app --yes
+The intended released installer command is npx agentdock-ui add chat.
+
+```tsx
+import { Chat } from "@/components/agentdock-ui/chat";
+<Chat adapter={appOwnedChatAdapter} />;
+```
+
+Hydrate normalized history and optional native resume state into a fresh AgentStore
+before streaming. See https://agentdock-ai.vercel.app/docs/ui.
 
 ## Migration
 
-Build the graph with LangChain `createAgent` or LangGraph `StateGraph`, configure
-tools and provider integrations directly, and pass the compiled graph to
-`serveAgent`. Replace AgentDock checkpoint packages with the corresponding
-LangGraph checkpointer package. See the migration guide for package mappings.
+Build graphs with LangChain createAgent or LangGraph StateGraph and pass them to
+new Agentdock(graph). Use native provider integrations and LangGraph savers.
+Remove old Agentdock provider/session wrappers and serving state schema extensions.

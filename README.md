@@ -1,8 +1,8 @@
 # AgentDock documentation
 
-The documentation website describes the serving adapter for compiled LangGraph
-graphs. Agent construction, model integrations, tools, checkpoint savers, and
-application security remain with LangChain, LangGraph, and the host application.
+The website introduces Agentdock core and its optional React UI, and documents
+the serving adapter for compiled LangGraph graphs. Agent construction, model
+integrations, tools, checkpoint savers, and application security remain with LangChain, LangGraph, and the host application.
 
 ## Run it locally
 
@@ -24,3 +24,6 @@ npm run build
 
 Documentation pages live in `content/docs` as MDX files. Machine-readable
 references are published at `/llms.txt` and `/llms-full.txt`.
+
+The homepage design tokens and interaction guidelines are documented in
+[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md). The interactive preview is a local simulation.
