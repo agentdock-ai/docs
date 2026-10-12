@@ -1,12 +1,12 @@
 ---
 title: Agentdock UI
-description: Editable React chat components connected through your application's adapter.
+description: Introduction, installation, live component previews, and source reference for Agentdock UI.
 ---
 
-Agentdock UI adds a chat interface to your Agentdock application. The installer
-copies small, editable components into `components/agentdock-ui`; the
-`@agentdock-ai/react` npm package provides the store, hooks, event decoding, and
-render model. Your application owns network requests and authentication.
+Agentdock UI is an editable React component system for building Agentdock chat
+experiences. The installer copies the component source into your application,
+while `@agentdock-ai/react` provides the store, hooks, event decoding, and render
+model. Your application owns network requests and authentication.
 
 The data flow is: the Chat component calls your `ChatAdapter`; the adapter sends
 the app's request; your server authenticates it and invokes Agentdock; Agentdock
@@ -14,7 +14,7 @@ streams canonical events; the adapter decodes and yields those events; the UI
 store updates its render model and Chat displays it. The UI never chooses your
 endpoint or request format.
 
-## Install the chat
+## Install Agentdock UI
 
 From your React application's directory, run the published installer:
 
@@ -182,15 +182,15 @@ Optional `adapter.attachments` enables file/image selection, previews, upload
 status, retry, and removal. Your application owns storage, permissions, limits,
 and conversion into model input.
 
-## Component catalog
+## Component reference
 
 The editable UI is made from small components that you can use, replace, or
-customize in your application. Browse the component pages for a preview, a short
-usage example, and a link to the canonical editable source. Previews use sample
-content and do not connect to an agent. The full Chat preview is omitted so the
-catalog focuses on reusable components.
+customize in your application. Each preview below renders the same source files
+shipped by the Agentdock UI installer. Switch to Code to inspect the complete
+component implementation, including its internal markup and behavior. The
+previews use sample content and do not connect to an agent.
 
-<UIComponentGallery />
+<UIReference />
 
 The `Chat` component composes these building blocks for a complete conversation.
 Install the Chat source with the CLI, then edit the copied files in your app.

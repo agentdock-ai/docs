@@ -2,183 +2,105 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
-.ad-ui-gallery {
+.ad-ui-reference {
   display: grid;
   gap: 2.5rem;
   margin-block: 1.5rem 2rem;
 }
-.ad-ui-gallery-group > h3 {
-  margin: 0 0 0.8rem;
+.ad-ui-reference-group > h2 {
+  margin: 0 0 1rem;
   border-bottom: 1px solid var(--color-fd-border);
-  padding-bottom: 0.55rem;
-  font-size: 1rem;
+  padding-bottom: 0.6rem;
+  font-size: 1.15rem;
 }
-.ad-ui-gallery-grid {
+.ad-ui-reference-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 1rem;
 }
-.ad-ui-gallery-card {
-  display: block;
+.ad-ui-reference-card {
   overflow: hidden;
-  min-width: 0;
   border: 1px solid var(--color-fd-border);
   border-radius: 0.75rem;
   background: var(--color-fd-card);
-  color: inherit;
-  text-decoration: none;
-  transition:
-    border-color 160ms ease,
-    transform 160ms ease;
 }
-.ad-ui-gallery-card:hover {
-  border-color: var(--color-fd-primary);
-  transform: translateY(-2px);
-}
-.ad-ui-gallery-card:focus-visible {
-  outline: 2px solid var(--color-fd-primary);
-  outline-offset: 3px;
-}
-.ad-ui-gallery-preview {
-  display: flex;
-  min-height: 132px;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: color-mix(in srgb, var(--color-fd-muted) 35%, transparent);
-  margin: 0;
-}
-.ad-ui-gallery-preview img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  max-height: 16rem;
-  object-fit: contain;
-  object-position: center;
-}
-.ad-ui-gallery-preview .ad-ui-preview-dark {
-  display: none;
-}
-.dark .ad-ui-gallery-preview .ad-ui-preview-light {
-  display: none;
-}
-.dark .ad-ui-gallery-preview .ad-ui-preview-dark {
-  display: block;
-}
-.ad-ui-gallery-copy {
-  padding: 0.75rem 0.9rem 0.9rem;
-}
-.ad-ui-gallery-copy h4 {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.ad-ui-gallery-copy p {
-  margin: 0.3rem 0 0;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-.ad-ui-gallery-copy > span {
-  display: inline-block;
-  margin-top: 0.65rem;
-  color: var(--color-fd-primary);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.ad-component-detail {
-  margin-block: 1.75rem 2rem;
-  overflow: hidden;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.8rem;
-  background: var(--color-fd-card);
-}
-.ad-component-tabs {
-  display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--color-fd-border);
-  padding: 0.5rem 0.75rem 0;
-}
-.ad-component-tabs button {
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  padding: 0.6rem 0.75rem;
-  color: var(--color-fd-muted-foreground);
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-.ad-component-tabs button[aria-selected="true"] {
-  border-bottom-color: var(--color-fd-primary);
-  color: var(--color-fd-foreground);
-}
-.ad-component-preview-panel {
-  display: grid;
-  min-height: 20rem;
-  place-items: center;
-  padding: clamp(1rem, 4vw, 2rem);
-  background: color-mix(in srgb, var(--color-fd-muted) 26%, transparent);
-}
-.ad-component-preview-panel img {
-  display: block;
-  width: 100%;
-  max-height: 34rem;
-  object-fit: contain;
-}
-.ad-component-preview-panel .ad-component-image-dark {
-  display: none;
-}
-.dark .ad-component-preview-panel .ad-component-image-light {
-  display: none;
-}
-.dark .ad-component-preview-panel .ad-component-image-dark {
-  display: block;
-}
-.ad-component-preview-panel p {
-  margin: 0.75rem 0 0;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.75rem;
-  text-align: center;
-}
-.ad-component-code-panel {
-  min-height: 20rem;
-  padding: 1rem;
-}
-.ad-component-code-heading {
+.ad-ui-reference-card-heading,
+.ad-ui-reference-tabs,
+.ad-ui-source-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.8rem;
+  gap: 1rem;
 }
-.ad-component-code-heading button {
+.ad-ui-reference-card-heading {
+  padding: 0.85rem 1rem 0.7rem;
+}
+.ad-ui-reference-card-heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.ad-ui-reference-card-heading p {
+  margin: 0.2rem 0 0;
+  color: var(--color-fd-muted-foreground);
+  font: 0.72rem/1.4 var(--font-mono);
+}
+.ad-ui-reference-card-heading button,
+.ad-ui-source-actions button {
   border: 1px solid var(--color-fd-border);
-  border-radius: 0.45rem;
+  border-radius: 0.4rem;
   background: var(--color-fd-background);
-  padding: 0.35rem 0.65rem;
+  padding: 0.35rem 0.6rem;
   color: var(--color-fd-foreground);
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+.ad-ui-reference-tabs {
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--color-fd-border);
+  padding: 0 1rem;
+}
+.ad-ui-reference-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0.45rem 0.55rem;
+  color: var(--color-fd-muted-foreground);
   cursor: pointer;
   font-size: 0.75rem;
 }
-.ad-component-code-panel pre {
-  overflow-x: auto;
-  margin: 0.75rem 0 0;
-  border-radius: 0.55rem;
-  background: var(--color-fd-muted);
+.ad-ui-reference-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-fd-primary);
+  color: var(--color-fd-foreground);
+}
+.ad-live-preview {
+  min-height: 8rem;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--color-fd-muted) 22%, transparent);
+}
+.ad-live-preview > * {
+  max-width: 100%;
+}
+.ad-ui-source {
+  overflow: auto;
+  max-height: 32rem;
+  margin: 0;
+  background: color-mix(in srgb, var(--color-fd-muted) 55%, transparent);
   padding: 1rem;
   color: var(--color-fd-foreground);
-  font-size: 0.82rem;
-  line-height: 1.7;
+  font: 0.76rem/1.65 var(--font-mono);
+  white-space: pre;
 }
-.ad-component-source-link {
-  display: inline-block;
-  margin: 0 1rem 1rem;
-  color: var(--color-fd-primary);
-  font-size: 0.8rem;
+.ad-ui-source-full {
+  border-top: 1px solid var(--color-fd-border);
+}
+.ad-ui-source-actions {
+  padding: 0.7rem 1rem;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.75rem;
 }
 @media (max-width: 640px) {
-  .ad-ui-gallery-grid {
-    grid-template-columns: 1fr;
+  .ad-ui-reference-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
