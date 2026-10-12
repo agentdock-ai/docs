@@ -8,6 +8,12 @@ copies small, editable components into `components/agentdock-ui`; the
 `@agentdock-ai/react` npm package provides the store, hooks, event decoding, and
 render model. Your application owns network requests and authentication.
 
+The data flow is: the Chat component calls your `ChatAdapter`; the adapter sends
+the app's request; your server authenticates it and invokes Agentdock; Agentdock
+streams canonical events; the adapter decodes and yields those events; the UI
+store updates its render model and Chat displays it. The UI never chooses your
+endpoint or request format.
+
 ## Install the chat
 
 From your React application's directory, run the published installer:
@@ -72,6 +78,97 @@ export function createChatAdapter({
 Your server validates requests, authorizes and derives thread identity, then
 calls `runtime.pipe()` or `runtime.toResponse()`. Browser consumers receive the
 canonical event contract; normalize provider and LangGraph events on the server.
+
+### Events and trusted context
+
+`sendMessage` must yield canonical `AgentEvent` values. For an SSE response,
+`decodeAgentEventStream(response.body, { signal })` parses and validates each
+event. The Chat component consumes the iterable into its `AgentStore`, which
+reduces events into UI state and the ordered render model. Do not yield raw
+provider or LangGraph events; map them through Agentdock on the server.
+
+The `context` passed to `runtime.pipe()` is trusted, server-side graph context.
+It is separate from browser UI state and from the event stream. Derive identity
+and permissions on the server, then pass only the authorized context to the
+graph. For example:
+
+```ts
+await runtime.pipe(response, {
+  threadId: authorizedThreadId,
+  input: { messages: [{ role: "user", content: prompt }] },
+  context: { userId: authenticatedUser.id },
+});
+```
+
+The `prompt` and `threadId` in the earlier adapter example show one possible
+application API shape; use your server's actual contract and never trust an
+unverified client-supplied thread ID.
+
+### Adapter capabilities
+
+`sendMessage({ text, attachments?, signal })` is required and returns an
+`AsyncIterable<AgentEvent>`. The UI creates and aborts the signal for the
+operation. Keep the adapter stable while a run is active; recreate it only when
+its actual configuration changes.
+
+| Optional member      | Implement it when                                                 | Adapter contract                                                                                                                                                                         |
+| -------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cancelRun`          | Your server can stop active work.                                 | Receives `{ runId, signal }`; sends the cancellation request and resolves when it is accepted.                                                                                           |
+| `respondToInterrupt` | Your graph supports pending interrupts or approvals.              | Receives `{ runId, interruptId, decisions, signal }`; returns canonical events for the resumed run. `runId` can be `null` for hydrated pending state.                                    |
+| `continueRun`        | Your graph can continue a static pause with no pending interrupt. | Receives `{ runId, signal }`; returns canonical events. `runId` can be `null` after history hydration.                                                                                   |
+| `attachments`        | Your app supports file or image upload.                           | Set optional `accept`, `maxFiles`, and `maxFileSize`, and implement `upload({ file, signal })`. Return `{ id, name, size, content }` with an app-owned ID and canonical display content. |
+
+Add only capabilities that your server implements. The component hides actions
+whose adapter methods are absent. The host must authorize each action and verify
+that uploaded attachment IDs belong to the current user and conversation.
+
+For a server using `@agentdock-ai/conversations`,
+`createConversationClient()` can provide a ready adapter and thread/history
+methods. It expects that package's documented HTTP routes; it does not create
+those routes on your server. Supply an authenticated `fetcher` when needed. See
+the [`@agentdock-ai/react` README](https://github.com/agentdock-ai/agentdock-ui/tree/main/packages/react#conversation-api-helpers)
+and [`@agentdock-ai/conversations` README](https://github.com/agentdock-ai/agentdock/tree/main/packages/conversations).
+
+For example, if those routes are mounted under `/api` and your app already has
+an authenticated fetch function:
+
+```tsx
+import { createConversationClient } from "@agentdock-ai/react";
+
+const client = createConversationClient({
+  baseUrl: "/api",
+  getThreadId: () => selectedThreadId,
+  fetcher: authenticatedFetch,
+});
+
+<Chat adapter={client.adapter} />;
+```
+
+Use the returned client methods to list or create threads, rename them, and load
+history. Your app still owns authentication, access checks, route mounting, and
+the selected thread state.
+
+## Configure the Chat component
+
+The copied `Chat` component includes its own `AgentProvider`; pass it the adapter
+and optionally a long-lived `AgentStore`:
+
+```tsx
+<Chat
+  adapter={chatAdapter}
+  welcomeTitle="How can I help?"
+  welcomeDescription="Ask a question or choose a suggestion."
+  suggestions={["Summarize this", "Find an answer"]}
+  placeholder="Message your assistant..."
+  showReasoning={false}
+  onActivityChange={(active) => setAgentBusy(active)}
+/>
+```
+
+`Chat` also accepts `className` and `disabled`. Omit optional props to use the
+defaults. Use `AgentProvider` directly when building a custom interface with
+hooks such as `useAgentState` and `useAgentActions`; those hooks must be rendered
+inside the provider. See the React package README for hook and store details.
 
 ## Supported experiences
 

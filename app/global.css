@@ -1105,6 +1105,42 @@ html > body[data-scroll-locked] {
   background: #eeeee6;
   border-radius: 5px;
 }
+.ad-agent-prompt {
+  display: grid;
+  grid-template-columns: 0.7fr 1.3fr;
+  align-items: center;
+  gap: 42px;
+}
+.ad-agent-prompt > div:first-child > p {
+  max-width: 350px;
+  margin: 18px 0;
+  color: var(--ad-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.ad-agent-prompt-card {
+  min-width: 0;
+  padding: 17px 18px 12px;
+  background: #f1f1eb;
+  border: 1px solid var(--ad-line);
+  border-radius: 8px;
+}
+.ad-agent-prompt-card pre {
+  max-height: 150px;
+  overflow: auto;
+  margin: 0;
+  color: #55584f;
+  font-family: var(--ad-mono);
+  font-size: 10px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.ad-agent-prompt-card .ad-copy {
+  margin-top: 8px;
+  padding-left: 0;
+  color: var(--ad-ink);
+  font-size: 11px;
+}
 .ad-code-panel {
   min-width: 0;
   border: 1px solid #363e30;
@@ -1656,6 +1692,13 @@ html > body[data-scroll-locked] {
   .ad-developer {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+  .ad-agent-prompt {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .ad-agent-prompt > div:first-child > p {
+    max-width: 500px;
   }
   .ad-developer-copy > p {
     max-width: 500px;

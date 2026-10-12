@@ -505,6 +505,14 @@ const faqs = [
   ],
 ];
 
+const agentImplementationPrompt = `Read https://agentdock-ai.vercel.app/skills.md and the relevant Agentdock docs. Inspect my app, then ask me these unanswered questions and wait before coding:
+- Who will use the agent, and what should it help them do?
+- What framework, APIs, authentication, and deployment setup does the app use?
+- How should threads and conversation history be identified and stored?
+- Which tools or side effects are needed, and what requires approval?
+- What UI, file uploads, constraints, and success criteria do I need?
+Ask only what the code does not answer. After I respond, implement the smallest suitable solution with LangGraph and Agentdock; use Agentdock UI if a chat interface is needed. Keep secrets, authorization, trusted thread IDs, and persistence app-owned. Use canonical Agentdock events and a stable ChatAdapter. Verify relevant checks and summarize.`;
+
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [example, setExample] = useState<Example>("node");
@@ -955,7 +963,7 @@ export function LandingPage() {
               <span>
                 <i />
                 {example === "react"
-                  ? "Editable components · local UI checkout"
+                  ? "Editable components · npm installer"
                   : "Compiled graph → canonical events"}
               </span>
               <Link
@@ -964,6 +972,26 @@ export function LandingPage() {
                 Setup guide <Icon name="arrow" />
               </Link>
             </div>
+          </div>
+        </section>
+        <section
+          className="ad-section ad-container ad-agent-prompt"
+          aria-labelledby="agent-prompt-title"
+        >
+          <div>
+            <span className="ad-eyebrow">IMPLEMENT WITH YOUR AI AGENT</span>
+            <h2 id="agent-prompt-title">Start with the right questions.</h2>
+            <p>
+              Copy this brief into your coding agent. It reads the Agentdock
+              guide, asks about your app first, then implements to your needs.
+            </p>
+            <Link href="/skills.md" className="ad-text-link">
+              Read the agent guide <Icon name="arrow" />
+            </Link>
+          </div>
+          <div className="ad-agent-prompt-card">
+            <pre>{agentImplementationPrompt}</pre>
+            <CopyButton value={agentImplementationPrompt} label="Copy prompt" />
           </div>
         </section>
         <section

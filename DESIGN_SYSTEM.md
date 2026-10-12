@@ -36,7 +36,9 @@ using natural transcript height rather than reserving empty space.
 ## Components and behavior
 
 `components/landing.tsx` owns the preview, copy feedback, tabs, navigation, FAQ,
-and reusable icon/button styles. The page entry remains a server component.
+the copyable `/skills.md` implementation prompt, and reusable icon/button
+styles. The page entry remains a server component. The prompt asks app-specific
+questions before proposing implementation.
 
 - Primary buttons use orange; secondary actions use borders or inline arrows.
 - The compatibility row uses text labels. Do not substitute generic interface
