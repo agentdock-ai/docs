@@ -45,8 +45,8 @@ yields canonical Agentdock events. The request body below is an example of an
 application-owned API, not a built-in Agentdock envelope.
 
 ```tsx
-import { Chat } from '@/components/agentdock-ui/chat';
-import { decodeAgentEventStream, type ChatAdapter } from '@agentdock-ai/react';
+import { Chat } from "@/components/agentdock-ui/chat";
+import { decodeAgentEventStream, type ChatAdapter } from "@agentdock-ai/react";
 
 export function createChatAdapter({
   endpoint,
@@ -60,12 +60,12 @@ export function createChatAdapter({
   return {
     async *sendMessage({ text, signal }) {
       const response = await request(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ prompt: text, threadId }),
         signal,
       });
-      if (!response.ok || !response.body) throw new Error('Request failed.');
+      if (!response.ok || !response.body) throw new Error("Request failed.");
       yield* decodeAgentEventStream(response.body, { signal });
     },
   };
@@ -95,7 +95,7 @@ graph. For example:
 ```ts
 await runtime.pipe(response, {
   threadId: authorizedThreadId,
-  input: { messages: [{ role: 'user', content: prompt }] },
+  input: { messages: [{ role: "user", content: prompt }] },
   context: { userId: authenticatedUser.id },
 });
 ```
@@ -133,10 +133,10 @@ For example, if those routes are mounted under `/api` and your app already has
 an authenticated fetch function:
 
 ```tsx
-import { createConversationClient } from '@agentdock-ai/react';
+import { createConversationClient } from "@agentdock-ai/react";
 
 const client = createConversationClient({
-  baseUrl: '/api',
+  baseUrl: "/api",
   getThreadId: () => selectedThreadId,
   fetcher: authenticatedFetch,
 });
@@ -158,7 +158,7 @@ and optionally a long-lived `AgentStore`:
   adapter={chatAdapter}
   welcomeTitle="How can I help?"
   welcomeDescription="Ask a question or choose a suggestion."
-  suggestions={['Summarize this', 'Find an answer']}
+  suggestions={["Summarize this", "Find an answer"]}
   placeholder="Message your assistant..."
   showReasoning={false}
   onActivityChange={(active) => setAgentBusy(active)}
@@ -185,10 +185,10 @@ and conversion into model input.
 ## Component catalog
 
 The editable UI is made from small components that you can use, replace, or
-customize in your application. The catalog below shows static captures of the
-components rendered in the [Agentdock UI playground](https://github.com/agentdock-ai/agentdock-ui/blob/main/apps/playground/src/pages/components-page.tsx).
-They use sample content and do not connect to an agent. The full Chat preview is
-omitted so the catalog focuses on reusable components.
+customize in your application. Browse the component pages for a preview, a short
+usage example, and a link to the canonical editable source. Previews use sample
+content and do not connect to an agent. The full Chat preview is omitted so the
+catalog focuses on reusable components.
 
 <UIComponentGallery />
 
@@ -203,7 +203,7 @@ Load and normalize saved messages in the consuming app, then hydrate a fresh
 store before streaming:
 
 ```tsx
-import { AgentStore } from '@agentdock-ai/react';
+import { AgentStore } from "@agentdock-ai/react";
 
 const store = new AgentStore();
 store.hydrateHistory({ messages: normalizedMessages, resumeState });
