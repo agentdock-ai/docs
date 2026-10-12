@@ -6,6 +6,7 @@ authorization, and checkpointer lifecycle.
 
 ## Documentation
 
+- [Agentic implementation guide](https://agentdock-ai.vercel.app/skills.md): end-to-end instructions for AI coding agents.
 - [Install](https://agentdock-ai.vercel.app/docs/installation): dependencies and graph compatibility.
 - [Quickstart](https://agentdock-ai.vercel.app/docs/quickstart): createAgent and Agentdock.
 - [Interrupt and resume](https://agentdock-ai.vercel.app/docs/approvals): approval middleware and checkpointed continuation.

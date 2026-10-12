@@ -23,7 +23,8 @@ npm run build
 ```
 
 Documentation pages live in `content/docs` as MDX files. Machine-readable
-references are published at `/llms.txt` and `/llms-full.txt`.
+references are published at `/llms.txt` and `/llms-full.txt`; the agent setup
+guide is available at `/skills.md`.
 
 The homepage design tokens and interaction guidelines are documented in
 [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md). The interactive preview is a local simulation.
