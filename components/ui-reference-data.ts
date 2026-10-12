@@ -6,6 +6,10 @@ export type UIReferenceMeta = {
   description: string;
 };
 
+export function uiReferenceGroupSlug(group: string) {
+  return `component-group-${group.toLowerCase().replaceAll(" ", "-")}`;
+}
+
 export const uiReferenceEntries: UIReferenceMeta[] = [
   {
     group: "Conversation",

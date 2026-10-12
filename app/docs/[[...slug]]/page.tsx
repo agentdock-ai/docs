@@ -9,8 +9,39 @@ import { notFound } from "next/navigation";
 import { getMDXComponents } from "@/components/mdx";
 import type { Metadata } from "next";
 import { createRelativeLink } from "fumadocs-ui/mdx";
-import { UIReferenceSidebar } from "@/components/ui-reference-sidebar";
-import { uiReferenceEntries } from "@/components/ui-reference-data";
+import {
+  uiReferenceEntries,
+  uiReferenceGroupSlug,
+} from "@/components/ui-reference-data";
+import type { TOCItemType } from "fumadocs-core/toc";
+
+function withComponentToc(toc: TOCItemType[]): TOCItemType[] {
+  const componentToc = [
+    ...new Set(uiReferenceEntries.map((entry) => entry.group)),
+  ].flatMap((group) => [
+    {
+      title: group,
+      url: `#${uiReferenceGroupSlug(group)}`,
+      depth: 3,
+    },
+    ...uiReferenceEntries
+      .filter((entry) => entry.group === group)
+      .map((entry) => ({
+        title: entry.name,
+        url: `#${entry.slug}`,
+        depth: 4,
+      })),
+  ]);
+  const referenceIndex = toc.findIndex(
+    (item) => item.url === "#component-reference",
+  );
+  if (referenceIndex === -1) return [...toc, ...componentToc];
+  return [
+    ...toc.slice(0, referenceIndex + 1),
+    ...componentToc,
+    ...toc.slice(referenceIndex + 1),
+  ];
+}
 
 export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const params = await props.params;
@@ -19,16 +50,10 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
 
   const MDX = page.data.body;
   const isUIReference = params.slug?.length === 1 && params.slug[0] === "ui";
-  const componentTree = isUIReference ? (
-    <UIReferenceSidebar entries={uiReferenceEntries} />
-  ) : undefined;
+  const toc = isUIReference ? withComponentToc(page.data.toc) : page.data.toc;
 
   return (
-    <DocsPage
-      toc={page.data.toc}
-      tableOfContent={{ style: "clerk", footer: componentTree }}
-      tableOfContentPopover={{ footer: componentTree }}
-    >
+    <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription className="mb-0">
         {page.data.description}

@@ -2,111 +2,6 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
-.ad-component-tree {
-  margin-top: 1rem;
-  border-top: 1px solid var(--color-fd-border);
-  padding-top: 0.9rem;
-}
-.ad-component-tree-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.65rem;
-}
-.ad-component-tree-heading h4,
-.ad-component-tree-heading p {
-  margin: 0;
-}
-.ad-component-tree-heading h4 {
-  color: var(--color-fd-foreground);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.ad-component-tree-eyebrow {
-  margin-bottom: 0.15rem !important;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.ad-component-tree-heading > span {
-  display: inline-grid;
-  min-width: 1.45rem;
-  height: 1.45rem;
-  place-items: center;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 999px;
-  color: var(--color-fd-muted-foreground);
-  font: 0.65rem/1 var(--font-mono);
-}
-.ad-component-tree-nav {
-  max-height: min(48vh, 32rem);
-  overflow-y: auto;
-  padding: 0 0.15rem 0.25rem;
-  scrollbar-width: thin;
-}
-.ad-component-tree-group {
-  position: relative;
-  display: grid;
-  gap: 0.12rem;
-  margin: 0 0 0.75rem;
-}
-.ad-component-tree-group::before {
-  position: absolute;
-  top: 1.4rem;
-  bottom: 0.15rem;
-  left: 0.42rem;
-  border-left: 1px solid var(--color-fd-border);
-  content: "";
-}
-.ad-component-tree-group > p {
-  margin: 0 0 0.2rem;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.ad-component-tree a {
-  position: relative;
-  display: grid;
-  gap: 0.12rem;
-  border-left: 2px solid transparent;
-  padding: 0.36rem 0.4rem 0.36rem 0.85rem;
-  color: var(--color-fd-muted-foreground);
-  text-decoration: none;
-  line-height: 1.3;
-}
-.ad-component-tree a::before {
-  position: absolute;
-  top: 0.95rem;
-  left: 0.43rem;
-  width: 0.28rem;
-  border-top: 1px solid var(--color-fd-border);
-  content: "";
-}
-.ad-component-tree a span {
-  color: inherit;
-  font-size: 0.73rem;
-  font-weight: 500;
-}
-.ad-component-tree a small {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.63rem;
-  line-height: 1.25;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-.ad-component-tree a:hover,
-.ad-component-tree a.is-active {
-  border-left-color: var(--color-fd-primary);
-  background: color-mix(in srgb, var(--color-fd-primary) 9%, transparent);
-  border-radius: 0.35rem;
-  color: var(--color-fd-foreground);
-}
 .ad-ui-reference {
   display: grid;
   gap: 2.5rem;
@@ -116,6 +11,9 @@
   border-bottom: 1px solid var(--color-fd-border);
   padding-bottom: 0.6rem;
   font-size: 1.15rem;
+}
+.ad-ui-reference-group {
+  scroll-margin-top: 6rem;
 }
 .ad-ui-reference-grid {
   display: grid;

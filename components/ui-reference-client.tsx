@@ -47,7 +47,10 @@ import { ToolCall } from "./agentdock-ui/tool-call";
 import { ToolMessage } from "./agentdock-ui/tool-message";
 import { ToolTimeline } from "./agentdock-ui/tool-timeline";
 import type { AttachmentDraft } from "./agentdock-ui/use-chat-attachments";
-import type { UIReferenceMeta } from "./ui-reference-data";
+import {
+  uiReferenceGroupSlug,
+  type UIReferenceMeta,
+} from "./ui-reference-data";
 
 export type UIReferenceEntry = UIReferenceMeta & { source: string };
 
@@ -474,7 +477,11 @@ export function UIReferenceClient({
   return (
     <div className="ad-ui-reference">
       {groups.map((group) => (
-        <section key={group} className="ad-ui-reference-group">
+        <section
+          id={uiReferenceGroupSlug(group)}
+          key={group}
+          className="ad-ui-reference-group"
+        >
           <h2>{group}</h2>
           <div className="ad-ui-reference-grid">
             {entries
