@@ -1,4 +1,4 @@
-# AgentDock documentation
+# Agentdock documentation
 
 The website introduces Agentdock core and its optional React UI, and documents
 the serving adapter for compiled LangGraph graphs. Agent construction, model

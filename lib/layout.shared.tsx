@@ -1,10 +1,10 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { AgentDockBrand } from '@/components/brand';
+import { AgentdockBrand } from '@/components/brand';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: <AgentDockBrand className="agentdock-brand-docs" />,
+      title: <AgentdockBrand className="agentdock-brand-docs" />,
       url: '/',
     },
     githubUrl: 'https://github.com/agentdock-ai/docs',

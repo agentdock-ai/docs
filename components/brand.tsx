@@ -1,8 +1,8 @@
-type AgentDockBrandProps = {
+type AgentdockBrandProps = {
   className?: string;
 };
 
-export function AgentDockBrand({ className = '' }: AgentDockBrandProps) {
+export function AgentdockBrand({ className = '' }: AgentdockBrandProps) {
   return (
     <span
       className={`agentdock-brand ${className}`.trim()}

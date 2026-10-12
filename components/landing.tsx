@@ -26,7 +26,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { AgentDockBrand } from "@/components/brand";
+import { AgentdockBrand } from "@/components/brand";
 
 const icons = {
   arrow: ArrowRight,
@@ -539,7 +539,7 @@ export function LandingPage() {
       </a>
       <header className="ad-header ad-container">
         <Link href="/" aria-label="Agentdock home">
-          <AgentDockBrand />
+          <AgentdockBrand />
         </Link>
         <nav className="ad-nav" aria-label="Main navigation">
           <a href="#stack">The stack</a>
@@ -1062,7 +1062,7 @@ export function LandingPage() {
       <footer className="ad-footer ad-container">
         <div>
           <Link href="/" aria-label="Agentdock home">
-            <AgentDockBrand />
+            <AgentdockBrand />
           </Link>
           <p>The connection between your agent and your app.</p>
         </div>

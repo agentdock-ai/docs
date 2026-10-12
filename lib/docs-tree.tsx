@@ -33,7 +33,7 @@ export function docsTree(tree: Root): Root {
       type: "folder",
       name: "UI & reference",
       icon: <PanelsTopLeft />,
-      children: pages(["ui", "migration", "api-reference"]),
+      children: pages(["ui", "api-reference"]),
     },
   ];
   return {

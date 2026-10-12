@@ -1,9 +1,11 @@
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
+import { UIComponentGallery } from '@/components/ui-component-gallery';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    UIComponentGallery,
     ...components,
   } satisfies MDXComponents;
 }

@@ -17,7 +17,6 @@ and persistence lifecycle.
 - API reference: <https://agentdock-ai.vercel.app/docs/api-reference>
 - Complete HTTP example: <https://agentdock-ai.vercel.app/docs/example>
 - React UI: <https://agentdock-ai.vercel.app/docs/ui>
-- Migration guidance: <https://agentdock-ai.vercel.app/docs/migration>
 - Short machine-readable index: <https://agentdock-ai.vercel.app/llms.txt>
 - Full machine-readable guide: <https://agentdock-ai.vercel.app/llms-full.txt>
 - This agent guide: <https://agentdock-ai.vercel.app/skills.md>
@@ -73,6 +72,10 @@ theme tokens. `components.json` selects Radix or Base UI; the installer can
 create it when missing. Use `--dry-run` to preview or `--cwd ./apps/web` to
 target a workspace app. For a custom React interface without the copied Chat
 components, install `@agentdock-ai/react` and `react` directly.
+
+Browse the UI guide's component catalog for representative previews of the
+conversation, composer, activity, layout, and control components:
+<https://agentdock-ai.vercel.app/docs/ui#component-catalog>.
 
 ## Build and serve an agent
 

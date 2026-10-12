@@ -182,6 +182,20 @@ Optional `adapter.attachments` enables file/image selection, previews, upload
 status, retry, and removal. Your application owns storage, permissions, limits,
 and conversion into model input.
 
+## Component catalog
+
+The editable UI is made from small components that you can use, replace, or
+customize in your application. The catalog below shows the shared components by
+category with representative previews; these examples use sample content and do
+not connect to an agent or run a full chat.
+
+<UIComponentGallery />
+
+The `Chat` component composes these building blocks for a complete conversation.
+Install the Chat source with the CLI, then edit the copied files in your app.
+For custom interfaces, use the components that fit your design and connect them
+to the `AgentStore` and hooks from `@agentdock-ai/react`.
+
 ## Restore conversations
 
 Load and normalize saved messages in the consuming app, then hydrate a fresh

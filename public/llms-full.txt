@@ -118,8 +118,6 @@ import { Chat } from "@/components/agentdock-ui/chat";
 Hydrate normalized history and optional native resume state into a fresh AgentStore
 before streaming. See https://agentdock-ai.vercel.app/docs/ui.
 
-## Migration
-
-Build graphs with LangChain createAgent or LangGraph StateGraph and pass them to
-new Agentdock(graph). Use native provider integrations and LangGraph savers.
-Remove old Agentdock provider/session wrappers and serving state schema extensions.
+The UI guide also includes a component catalog with representative previews for
+the conversation, composer, activity, layout, and control building blocks. The
+previews use sample content and do not connect to an agent.
