@@ -118,6 +118,7 @@ import { Chat } from "@/components/agentdock-ui/chat";
 Hydrate normalized history and optional native resume state into a fresh AgentStore
 before streaming. See https://agentdock-ai.vercel.app/docs/ui.
 
-The UI guide also includes a component catalog with representative previews for
-the conversation, composer, activity, layout, and control building blocks. The
-previews use sample content and do not connect to an agent.
+The UI guide also includes light and dark screenshots of the actual components
+rendered in the playground, grouped by conversation, composer, activity, layout,
+and controls. They use sample content and do not connect to an agent; the full
+Chat preview is omitted.

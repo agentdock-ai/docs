@@ -32,9 +32,24 @@
   justify-content: center;
   padding: 1rem;
   background: color-mix(in srgb, var(--color-fd-muted) 35%, transparent);
-  color: var(--color-fd-foreground);
-  font-size: 0.82rem;
-  line-height: 1.5;
+  margin: 0;
+}
+.ad-ui-gallery-preview img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 16rem;
+  object-fit: contain;
+  object-position: center;
+}
+.ad-ui-gallery-preview .ad-ui-preview-dark {
+  display: none;
+}
+.dark .ad-ui-gallery-preview .ad-ui-preview-light {
+  display: none;
+}
+.dark .ad-ui-gallery-preview .ad-ui-preview-dark {
+  display: block;
 }
 .ad-ui-gallery-copy {
   padding: 0.75rem 0.9rem 0.9rem;
@@ -49,257 +64,6 @@
   color: var(--color-fd-muted-foreground);
   font-size: 0.75rem;
   line-height: 1.5;
-}
-.ad-ui-demo-block {
-  display: flex;
-  width: min(100%, 340px);
-  flex-direction: column;
-  gap: 0.55rem;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.7rem;
-  background: var(--color-fd-background);
-  padding: 0.8rem 0.9rem;
-}
-.ad-ui-demo-user {
-  align-self: flex-end;
-  background: color-mix(
-    in srgb,
-    var(--color-fd-primary) 10%,
-    var(--color-fd-background)
-  );
-}
-.ad-ui-demo-row,
-.ad-ui-demo-actions,
-.ad-ui-demo-chips,
-.ad-ui-demo-toolbar,
-.ad-ui-demo-icons {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.ad-ui-demo-stack {
-  display: grid;
-  width: min(100%, 360px);
-  gap: 0.55rem;
-}
-.ad-ui-demo-muted {
-  display: block;
-  color: var(--color-fd-muted-foreground);
-  font-size: 0.72rem;
-}
-.ad-ui-demo-rule {
-  border-top: 1px solid var(--color-fd-border);
-}
-.ad-ui-demo-block code,
-.ad-ui-demo-code {
-  border-radius: 0.35rem;
-  background: color-mix(in srgb, var(--color-fd-muted) 55%, transparent);
-  padding: 0.35rem 0.45rem;
-  font-family: monospace;
-  font-size: 0.7rem;
-}
-.ad-ui-demo-image {
-  display: block;
-  width: 4rem;
-  height: 3rem;
-  border-radius: 0.4rem;
-  background: linear-gradient(145deg, #91b4c7, #d6c69f 55%, #688269);
-}
-.ad-ui-demo-composer {
-  display: flex;
-  width: min(100%, 360px);
-  min-height: 76px;
-  flex-direction: column;
-  justify-content: space-between;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.8rem;
-  background: var(--color-fd-background);
-  padding: 0.75rem;
-  color: var(--color-fd-muted-foreground);
-}
-.ad-ui-demo-actions {
-  justify-content: space-between;
-}
-.ad-ui-demo-actions i,
-.ad-ui-demo-button,
-.ad-ui-demo-chips > span,
-.ad-ui-demo-toolbar > span {
-  border: 1px solid var(--color-fd-border);
-  border-radius: 999px;
-  background: var(--color-fd-background);
-  padding: 0.25rem 0.55rem;
-  font-size: 0.7rem;
-  font-style: normal;
-}
-.ad-ui-demo-chips {
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.ad-ui-demo-chips b {
-  margin-left: 0.35rem;
-  color: var(--color-fd-muted-foreground);
-}
-.ad-ui-demo-dots {
-  display: inline-flex;
-  gap: 0.2rem;
-}
-.ad-ui-demo-dots i {
-  width: 0.32rem;
-  height: 0.32rem;
-  border-radius: 50%;
-  background: var(--color-fd-muted-foreground);
-}
-.ad-ui-demo-caret {
-  width: 0.35rem;
-  height: 1rem;
-  background: var(--color-fd-primary);
-}
-.ad-ui-demo-tool {
-  display: flex;
-  justify-content: space-between;
-  border-left: 1px solid var(--color-fd-border);
-  padding: 0.4rem 0.65rem;
-  font-family: monospace;
-  font-size: 0.72rem;
-}
-.ad-ui-demo-tool b {
-  color: var(--color-fd-muted-foreground);
-  font-family: sans-serif;
-  font-size: 0.65rem;
-  font-weight: 400;
-}
-.ad-ui-demo-accent {
-  color: var(--color-fd-primary) !important;
-}
-.ad-ui-demo-solid {
-  border-color: var(--color-fd-primary) !important;
-  background: var(--color-fd-primary) !important;
-  color: var(--color-fd-primary-foreground) !important;
-}
-.ad-ui-demo-error {
-  border-color: color-mix(
-    in srgb,
-    var(--color-fd-error) 40%,
-    var(--color-fd-border)
-  );
-}
-.ad-ui-demo-workspace {
-  display: flex;
-  width: min(100%, 370px);
-  height: 102px;
-  overflow: hidden;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.6rem;
-  background: var(--color-fd-background);
-}
-.ad-ui-demo-workspace aside {
-  width: 27%;
-  border-right: 1px solid var(--color-fd-border);
-  background: color-mix(in srgb, var(--color-fd-muted) 40%, transparent);
-}
-.ad-ui-demo-workspace div {
-  display: grid;
-  flex: 1;
-  align-content: center;
-  gap: 0.55rem;
-  padding: 0.75rem;
-}
-.ad-ui-demo-workspace div span,
-.ad-ui-demo-shell > div,
-.ad-ui-demo-viewport > span {
-  height: 0.45rem;
-  border-radius: 1rem;
-  background: color-mix(
-    in srgb,
-    var(--color-fd-muted-foreground) 22%,
-    transparent
-  );
-}
-.ad-ui-demo-workspace div span:nth-child(2) {
-  width: 75%;
-}
-.ad-ui-demo-shell {
-  display: grid;
-  width: min(100%, 360px);
-  height: 96px;
-  grid-template-rows: 1fr 28px;
-  gap: 0.5rem;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.6rem;
-  background: var(--color-fd-background);
-  padding: 0.6rem;
-}
-.ad-ui-demo-shell > div {
-  width: 70%;
-  align-self: center;
-}
-.ad-ui-demo-shell > span {
-  border: 1px solid var(--color-fd-border);
-  border-radius: 0.4rem;
-}
-.ad-ui-demo-viewport {
-  position: relative;
-  display: grid;
-  width: min(100%, 350px);
-  gap: 0.65rem;
-  padding: 0.3rem 1.7rem 0.3rem 0.3rem;
-}
-.ad-ui-demo-viewport > span:nth-child(1) {
-  width: 75%;
-}
-.ad-ui-demo-viewport > span:nth-child(2) {
-  width: 90%;
-}
-.ad-ui-demo-viewport > span:nth-child(3) {
-  width: 58%;
-}
-.ad-ui-demo-viewport b,
-.ad-ui-demo-scroll {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border: 1px solid var(--color-fd-border);
-  border-radius: 50%;
-  background: var(--color-fd-background);
-}
-.ad-ui-demo-viewport b {
-  position: absolute;
-  right: 0;
-  bottom: -0.5rem;
-}
-.ad-ui-demo-sidebar {
-  display: grid;
-  width: min(100%, 320px);
-  gap: 0.2rem;
-  font-size: 0.72rem;
-}
-.ad-ui-demo-sidebar span {
-  border-radius: 0.35rem;
-  padding: 0.35rem 0.55rem;
-}
-.ad-ui-demo-sidebar .ad-ui-demo-selected {
-  background: color-mix(
-    in srgb,
-    var(--color-fd-primary) 10%,
-    var(--color-fd-background)
-  );
-}
-.ad-ui-demo-toolbar {
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.ad-ui-demo-scroll {
-  font-size: 1.1rem;
-}
-.ad-ui-demo-icons {
-  gap: 1rem;
-  font-size: 1.15rem;
-}
-.ad-ui-demo-input {
-  min-height: 70px;
-  justify-content: flex-start;
-  color: var(--color-fd-muted-foreground);
 }
 @media (max-width: 640px) {
   .ad-ui-gallery-grid {
