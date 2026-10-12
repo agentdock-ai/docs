@@ -19,15 +19,17 @@ const graph = createAgent({
 }).graph;
 
 const runtime = new Agentdock(graph, {
-  interruptFormat: "langchain-hitl",
+  interruptFormat: Agentdock.HITL,
   validateResume: validateToolApprovalResume,
 });
 ```
 
-`interruptFormat` selects LangChain HITL presentation; generic interrupts stay
-opaque by default. The optional validator checks the response envelope and the
-number of actions. It does not enforce the user's permissions. Supply your own
-validator when current application context changes the approval batch or policy.
+`Agentdock.HITL` selects LangChain HITL presentation. Use `Agentdock.OPAQUE` to
+keep interrupts generic; that is the default. The equivalent strings
+(`"langchain-hitl"` and `"opaque"`) remain supported. The optional validator
+checks the response envelope and the number of actions. It does not enforce the
+user's permissions. Supply your own validator when current application context
+changes the approval batch or policy.
 
 When the stream emits `interrupt.required`, present the pending action to the
 authorized user. Make a new authorized request with the same server-derived

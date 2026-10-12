@@ -501,7 +501,7 @@ const faqs = [
   ],
   [
     "Can I install Agentdock UI today?",
-    "The UI and installer are implemented in the local repository. Publishing is a separate release step, so the released npx installer is still planned. The UI guide explains how to build the checkout and install the components locally.",
+    "Yes. From your React app, run npx @agentdock-ai/agentdock-ui add chat. The installer copies editable chat components into your app and installs any missing dependencies. See the UI guide for requirements and options.",
   ],
 ];
 
@@ -862,7 +862,7 @@ export function LandingPage() {
                 Explore the UI source <Icon name="arrow" />
               </Link>
               <p className="ad-release-note">
-                UI implemented locally · installer release in development
+                Install with npx @agentdock-ai/agentdock-ui add chat
               </p>
             </article>
           </div>

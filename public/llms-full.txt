@@ -40,8 +40,9 @@ use a durable LangGraph saver in production and manage its lifecycle in the app.
 ## API
 
 - new Agentdock(graph, options?) creates a runtime.
-- Options: recursionLimit override; interruptFormat (opaque default or langchain-hitl);
-  validateResume preflight hook; onError server diagnostics.
+- Options: recursionLimit override; interruptFormat (Agentdock.OPAQUE by default
+  or Agentdock.HITL for LangChain HITL presentation; equivalent strings remain
+  supported); validateResume preflight hook; onError server diagnostics.
 - runtime.stream(run) returns an async iterable of canonical contract events.
 - runtime.pipe(nodeResponse, run) writes SSE with backpressure and disconnect cancellation.
 - runtime.toResponse(run) returns a promise for a cancelable Web Response.
@@ -81,21 +82,33 @@ Hydrate pending control state with getResumeState and load history separately.
 
 ## Agentdock UI
 
-Agentdock UI provides editable React chat source and the @agentdock-ai/react
-store/hooks/event decoder. Your stable app-owned ChatAdapter supplies sendMessage
-and optional respondToInterrupt, cancelRun, continueRun, and attachments.
-Chat has no endpoint prop. Authentication, request construction, thread identity,
-attachment storage, and business rules stay in the consuming app.
+Agentdock UI adds a chat interface to your Agentdock application. The published
+CLI copies small, editable components into components/agentdock-ui. The
+@agentdock-ai/react npm package provides the store, hooks, event decoding, and
+render model. Your application owns network requests and authentication.
 
 The UI supports streaming, Markdown, tools, approvals, cancellation, saved history,
 and optional files/images. It inherits host shadcn semantic tokens and supports
-Radix or Base UI. Requires React, TypeScript, Tailwind CSS 4, and an alias.
+Radix or Base UI. Requires Node.js 22+, React 18+, TypeScript, Tailwind CSS 4, a resolvable
+TypeScript alias, and shadcn semantic theme tokens.
 
-UI packages and installer are implemented locally; publication is a separate step.
-Build the UI checkout with yarn install, yarn build:packages, yarn registry:build,
-and yarn cli:build, then run:
-node packages/cli/dist/index.js add chat --cwd /path/to/app --yes
-The intended released installer command is npx agentdock-ui add chat.
+From your React application's directory, install the chat with:
+
+npx @agentdock-ai/agentdock-ui add chat
+
+The installer detects npm, pnpm, Yarn, or Bun, checks required dependencies and
+versions, and installs missing dependencies with the detected package manager.
+It copies the appropriate Radix or Base UI source into the app. An existing
+components.json selects the primitive set; if missing, the installer can create
+it using the detected alias and theme. Use --cwd ./apps/web to target an app in
+a monorepo, or --dry-run to preview without writing files or installing packages.
+Repeated installs preserve edited source; --overwrite explicitly replaces it.
+The Starter provides npm run ui:add to refresh its chat components.
+
+For a custom interface, install the runtime package with your app's package
+manager. With npm, run: npm install @agentdock-ai/react react. The editable Chat
+source is copied into your project; it is not imported as a prebuilt component
+package.
 
 ```tsx
 import { Chat } from "@/components/agentdock-ui/chat";

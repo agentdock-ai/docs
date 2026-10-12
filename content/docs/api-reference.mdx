@@ -16,7 +16,7 @@ const runtime = new Agentdock(graph);
 | Option            | Description                                                                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `recursionLimit`  | Optional positive safe integer override. Otherwise LangGraph resolves its configured limit.                                                               |
-| `interruptFormat` | `"opaque"` (default) or `"langchain-hitl"` for native LangChain approval presentation.                                                                    |
+| `interruptFormat` | `Agentdock.OPAQUE` (default) or `Agentdock.HITL` for native LangChain approval presentation. The equivalent strings remain supported.                     |
 | `validateResume`  | Optional application preflight hook `(resumeValue, pendingInterrupts, currentContext)`. May be asynchronous; runs before graph invocation or SSE headers. |
 | `onError`         | Optional server diagnostic callback `(error, { threadId, runId, stage })`. Stage is `graph`, `mapper`, or `checkpoint`; client errors remain sanitized.   |
 

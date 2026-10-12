@@ -14,13 +14,16 @@ authorization, and checkpointer lifecycle.
 - [API reference](https://agentdock-ai.vercel.app/docs/api-reference): serving methods and ownership.
 - [Migration](https://agentdock-ai.vercel.app/docs/migration): move from the former AgentDock runtime APIs.
 
-- [Agentdock UI](https://agentdock-ai.vercel.app/docs/ui): editable React components and local installer setup.
+- [Agentdock UI](https://agentdock-ai.vercel.app/docs/ui): install editable React chat components with the published CLI.
 
 ## Packages
 
 - [`@agentdock-ai/agentdock`](https://www.npmjs.com/package/@agentdock-ai/agentdock): serve compiled graphs with SSE.
 - [`@agentdock-ai/contracts`](https://www.npmjs.com/package/@agentdock-ai/contracts): event contract and reducer.
+- [`@agentdock-ai/react`](https://www.npmjs.com/package/@agentdock-ai/react): React store, hooks, and stream helpers for the UI.
+- [`@agentdock-ai/ui-core`](https://www.npmjs.com/package/@agentdock-ai/ui-core): framework-independent UI state and stream primitives.
+- [`@agentdock-ai/agentdock-ui`](https://www.npmjs.com/package/@agentdock-ai/agentdock-ui): CLI that copies editable chat components into a React app.
+
+Install the editable chat source in a React app with `npx @agentdock-ai/agentdock-ui add chat`.
 
 Use LangChain provider integrations and LangGraph checkpoint savers directly.
-
-Agentdock UI packages are implemented locally; publishing is a separate release step.

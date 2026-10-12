@@ -2,7 +2,8 @@
 
 The website presents one connection: an application-owned LangGraph agent,
 Agentdock serving and contracts, and an optional editable React interface.
-Product claims follow the core and UI READMEs. UI publication is a separate step.
+Product claims follow the core and UI READMEs. The published UI installer is
+`@agentdock-ai/agentdock-ui`; it adds editable React chat source to an app.
 
 ## Visual language
 
