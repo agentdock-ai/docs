@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowUp,
   ChevronRight,
@@ -47,45 +47,9 @@ import { ToolCall } from "./agentdock-ui/tool-call";
 import { ToolMessage } from "./agentdock-ui/tool-message";
 import { ToolTimeline } from "./agentdock-ui/tool-timeline";
 import type { AttachmentDraft } from "./agentdock-ui/use-chat-attachments";
+import type { UIReferenceMeta } from "./ui-reference-data";
 
-export type UIReferenceEntry = {
-  group: string;
-  name: string;
-  slug: string;
-  file: string;
-  source: string;
-};
-
-const descriptions: Record<string, string> = {
-  "message-user": "A user-authored message bubble.",
-  "message-assistant":
-    "An assistant response with optional reasoning and actions.",
-  "message-content": "The content container shared by message variants.",
-  "markdown-content": "Renders assistant text as formatted Markdown.",
-  "message-list": "Lays out conversation messages and activity in order.",
-  composer: "The primary input area for sending a conversation message.",
-  "composer-attachments": "Displays files attached to the composer.",
-  "composer-attachment-picker": "Opens the file picker for new attachments.",
-  "streaming-text": "Presents text while a response is still streaming.",
-  "thinking-indicator": "Communicates that the assistant is working.",
-  reasoning: "Shows expandable model reasoning content.",
-  "tool-message": "Displays a tool result as a conversation item.",
-  "tool-call": "Shows one tool call and its current status.",
-  "tool-timeline": "Groups tool activity into a compact timeline.",
-  "approval-card": "Requests and presents a user approval decision.",
-  "error-state": "Explains a recoverable conversation or connection error.",
-  "chat-shell": "Provides the full chat surface and composer layout.",
-  "chat-viewport": "Owns the scrollable conversation viewport.",
-  "thread-sidebar": "Lists threads and exposes thread navigation.",
-  "empty-state": "Introduces a conversation before the first message.",
-  suggestions: "Offers ready-to-send prompts for an empty conversation.",
-  "chat-action-bar": "Adds compact actions beneath a response.",
-  "scroll-to-latest": "Returns the conversation viewport to the latest item.",
-  "chat-icon": "Renders the icon treatment used by chat controls.",
-  button: "The shared button primitive used by chat actions.",
-  textarea: "The shared multiline text input primitive.",
-  collapsible: "Provides accessible expandable and collapsible content.",
-};
+export type UIReferenceEntry = UIReferenceMeta & { source: string };
 
 const textBlock = (id: string, text: string) => ({
   id,
@@ -501,147 +465,92 @@ export function UIReferenceClient({
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [mode, setMode] = useState<Record<string, "preview" | "code">>({});
-  const [active, setActive] = useState(entries[0]?.slug ?? "");
-  const navigationTarget = useRef<string | null>(null);
   const groups = [...new Set(entries.map((entry) => entry.group))];
-
-  useEffect(() => {
-    const sections = entries
-      .map((entry) => document.getElementById(entry.slug))
-      .filter((section): section is HTMLElement => section !== null);
-    const updateActive = () => {
-      if (navigationTarget.current) return;
-      const threshold = Math.min(180, window.innerHeight * 0.25);
-      let current = sections[0];
-      for (const section of sections) {
-        if (section.getBoundingClientRect().top <= threshold) current = section;
-        else break;
-      }
-      if (current) setActive(current.id);
-    };
-    updateActive();
-    document.addEventListener("scroll", updateActive, true);
-    window.addEventListener("resize", updateActive);
-    return () => {
-      document.removeEventListener("scroll", updateActive, true);
-      window.removeEventListener("resize", updateActive);
-    };
-  }, [entries]);
 
   async function copy(entry: UIReferenceEntry) {
     await navigator.clipboard.writeText(entry.source);
     setOpen(entry.slug);
   }
   return (
-    <div className="ad-ui-reference-layout">
-      <nav className="ad-ui-reference-nav" aria-label="UI components">
-        <p className="ad-ui-reference-nav-title">Components</p>
-        {groups.map((group) => (
-          <div className="ad-ui-reference-nav-group" key={group}>
-            <p>{group}</p>
+    <div className="ad-ui-reference">
+      {groups.map((group) => (
+        <section key={group} className="ad-ui-reference-group">
+          <h2>{group}</h2>
+          <div className="ad-ui-reference-grid">
             {entries
               .filter((entry) => entry.group === group)
-              .map((entry) => (
-                <a
-                  href={`#${entry.slug}`}
-                  className={active === entry.slug ? "is-active" : undefined}
-                  aria-current={active === entry.slug ? "location" : undefined}
-                  onClick={() => {
-                    navigationTarget.current = entry.slug;
-                    setActive(entry.slug);
-                    window.setTimeout(() => {
-                      navigationTarget.current = null;
-                    }, 900);
-                  }}
-                  key={entry.slug}
-                >
-                  <span>{entry.name}</span>
-                  <small>{descriptions[entry.slug]}</small>
-                </a>
-              ))}
-          </div>
-        ))}
-      </nav>
-      <div className="ad-ui-reference">
-        {groups.map((group) => (
-          <section key={group} className="ad-ui-reference-group">
-            <h2>{group}</h2>
-            <div className="ad-ui-reference-grid">
-              {entries
-                .filter((entry) => entry.group === group)
-                .map((entry) => {
-                  const current = mode[entry.slug] ?? "preview";
-                  return (
-                    <article
-                      className="ad-ui-reference-card"
-                      id={entry.slug}
-                      key={entry.slug}
-                    >
-                      <div className="ad-ui-reference-card-heading">
-                        <div>
-                          <h3>{entry.name}</h3>
-                          <p>{descriptions[entry.slug]}</p>
-                          <code>{entry.file}</code>
+              .map((entry) => {
+                const current = mode[entry.slug] ?? "preview";
+                return (
+                  <article
+                    className="ad-ui-reference-card"
+                    id={entry.slug}
+                    key={entry.slug}
+                  >
+                    <div className="ad-ui-reference-card-heading">
+                      <div>
+                        <h3>{entry.name}</h3>
+                        <p>{entry.description}</p>
+                        <code>{entry.file}</code>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpen(open === entry.slug ? null : entry.slug)
+                        }
+                      >
+                        {open === entry.slug ? "Hide source" : "View source"}
+                      </button>
+                    </div>
+                    <div className="ad-ui-reference-tabs">
+                      <button
+                        type="button"
+                        aria-selected={current === "preview"}
+                        onClick={() =>
+                          setMode({ ...mode, [entry.slug]: "preview" })
+                        }
+                      >
+                        Preview
+                      </button>
+                      <button
+                        type="button"
+                        aria-selected={current === "code"}
+                        onClick={() =>
+                          setMode({ ...mode, [entry.slug]: "code" })
+                        }
+                      >
+                        Code
+                      </button>
+                    </div>
+                    {current === "preview" ? (
+                      <ComponentPreview slug={entry.slug} />
+                    ) : (
+                      <pre className="ad-ui-source">
+                        <code>{entry.source}</code>
+                      </pre>
+                    )}
+                    {open === entry.slug && (
+                      <div className="ad-ui-source ad-ui-source-full">
+                        <div className="ad-ui-source-actions">
+                          <span>Canonical component source</span>
+                          <button
+                            type="button"
+                            onClick={() => void copy(entry)}
+                          >
+                            Copy source
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpen(open === entry.slug ? null : entry.slug)
-                          }
-                        >
-                          {open === entry.slug ? "Hide source" : "View source"}
-                        </button>
-                      </div>
-                      <div className="ad-ui-reference-tabs">
-                        <button
-                          type="button"
-                          aria-selected={current === "preview"}
-                          onClick={() =>
-                            setMode({ ...mode, [entry.slug]: "preview" })
-                          }
-                        >
-                          Preview
-                        </button>
-                        <button
-                          type="button"
-                          aria-selected={current === "code"}
-                          onClick={() =>
-                            setMode({ ...mode, [entry.slug]: "code" })
-                          }
-                        >
-                          Code
-                        </button>
-                      </div>
-                      {current === "preview" ? (
-                        <ComponentPreview slug={entry.slug} />
-                      ) : (
-                        <pre className="ad-ui-source">
+                        <pre>
                           <code>{entry.source}</code>
                         </pre>
-                      )}
-                      {open === entry.slug && (
-                        <div className="ad-ui-source ad-ui-source-full">
-                          <div className="ad-ui-source-actions">
-                            <span>Canonical component source</span>
-                            <button
-                              type="button"
-                              onClick={() => void copy(entry)}
-                            >
-                              Copy source
-                            </button>
-                          </div>
-                          <pre>
-                            <code>{entry.source}</code>
-                          </pre>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })}
-            </div>
-          </section>
-        ))}
-      </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
