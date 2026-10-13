@@ -7,76 +7,74 @@ Product claims follow the core and UI READMEs. The published UI installer is
 
 ## Visual language
 
-Warm paper, charcoal ink, restrained orange actions, olive infrastructure surfaces,
-and lilac UI surfaces. The interface is the hero visual. Avoid decorative stock
+Cool fog canvas, harbor navy ink, and signal colors that encode event types:
+teal for tools and live state, violet for message streaming, amber for interrupts
+that need a person, green for completion. The hero demo is the main visual: a
+chat interface beside the event stream that drives it. Avoid decorative stock
 imagery, fabricated metrics, and claims that the preview calls real services.
 
-Tokens live under `.ad-site` in `app/global.css` so docs theme styles remain independent.
+Tokens live under `.ad-site` in `components/landing.css` so docs theme styles
+remain independent.
 
-| Token          | Value     | Purpose                           |
-| -------------- | --------- | --------------------------------- |
-| `--ad-bg`      | `#f9f8f5` | Canvas                            |
-| `--ad-surface` | `#ffffff` | Interactive preview               |
-| `--ad-ink`     | `#252722` | Primary text                      |
-| `--ad-muted`   | `#73756c` | Body and secondary text           |
-| `--ad-line`    | `#e1e2d9` | Dividers                          |
-| `--ad-accent`  | `#c54f2a` | Primary actions and hero emphasis |
-| `--ad-lilac`   | `#eeedf7` | UI product surface                |
-| `--ad-green`   | `#4d725b` | Successful demo state             |
+| Token          | Value     | Purpose                                 |
+| -------------- | --------- | --------------------------------------- |
+| `--ad-bg`      | `#f3f5f8` | Canvas                                  |
+| `--ad-surface` | `#ffffff` | Cards and the interactive preview       |
+| `--ad-ink`     | `#0f1b2d` | Text, primary actions, dark panels      |
+| `--ad-muted`   | `#566377` | Body and secondary text                 |
+| `--ad-line`    | `#dfe4eb` | Dividers and borders                    |
+| `--ad-teal`    | `#0d8a87` | Tools, links on hover, focus, live dots |
+| `--ad-violet`  | `#6a5bd6` | Message streaming events                |
+| `--ad-amber`   | `#d98a14` | Interrupts and approvals                |
+| `--ad-green`   | `#1f9566` | Completed states                        |
 
-Use local Arial/Helvetica and system monospace with no external font fetch.
-Large headings use tight tracking; reading text uses generous line height.
-A 1200px container aligns all sections. Spacing follows a 4px baseline. Section
-intervals are 72px on desktop, 60px on tablets, and 48px on phones. Product cards
-use 24px padding on desktop. Cards use 6–12px radii, fine borders, and soft shadows.
-Primary actions are 40px tall with 12px type, 14px horizontal padding, and a 12px
-icon gap. On phones, actions retain a 44px touch target. Keep the demo compact by
-using natural transcript height rather than reserving empty space.
+Bricolage Grotesque sets all text and JetBrains Mono sets code and event names,
+both self-hosted through `next/font` in `app/page.tsx`. Headings use tight
+negative tracking; reading text uses 1.6 line height at 15 to 17px. A 1200px
+container aligns all sections, with 112px section intervals on desktop and 88px
+on tablets and phones. Buttons are 40px tall (32px for compact actions) with
+14px type, 16px horizontal padding, and an 8px icon gap; phones use 44px touch
+targets. Cards use 14 to 16px radii, fine borders, and layered soft shadows.
 
 ## Components and behavior
 
-`components/landing.tsx` owns the preview, copy feedback, tabs, navigation, FAQ,
+`components/landing.tsx` owns the demo, copy feedback, tabs, navigation, FAQ,
 the copyable `/skills.md` implementation prompt, and reusable icon/button
-styles. The page entry remains a server component. The prompt asks app-specific
-questions before proposing implementation.
+styles. The page entry remains a server component.
 
-- Primary buttons use orange; secondary actions use borders or inline arrows.
-- The compatibility row uses text labels. Do not substitute generic interface
-  icons for technology logos. The Agentdock header and footer use the real logo.
-- The preview switches between three illustrative scenarios. Tool results disclose
-  detail. Approval advances to a brief local running state; decline preserves a
-  draft; replay restores pending approval. It sends no network requests.
-- Copy buttons report success or failure. Integration tabs support arrow keys,
-  Home, and End; only the active tab participates in sequential keyboard focus.
-- Native details elements provide accessible FAQ disclosure.
+- The demo starts when it scrolls into view and replays a scripted run with
+  canonical event names. Approve resumes the run; decline completes it without
+  the side effect; replay restarts the scenario. It sends no network requests.
+- The compatibility row uses text labels. The header and footer use the real logo.
+- Copy buttons swap icons, show a tooltip, and announce success or failure.
+  Scenario and integration tabs support arrow keys; integration tabs also
+  support Home and End.
+- FAQ items are buttons with `aria-expanded` controlling labelled regions.
 - Mobile navigation closes after selection or Escape, restoring toggle focus on Escape.
 - The footer credits Muhammad Zain with a link to `https://muhammad-zain.com` on
   every screen size.
 - Visible focus rings, a skip link, labelled sections, and reduced-motion handling
-  are required. Tiny decorative labels never carry the only explanation of behavior.
-- At 850px the hero and developer section stack; at 600px product cards stack
-  and navigation becomes a menu. Code can scroll inside its panel, never the page.
+  are required.
+- At 1080px the hero and split sections stack; at 860px cards stack, the demo
+  panes stack, and navigation becomes a menu. Code scrolls inside its panel.
 
 The homepage uses its own light canvas regardless of the docs' saved theme.
-Docs retain the Fumadocs light/dark theme and existing logo switching.
 
 ## Icons and motion
 
-Use named Lucide React imports for interface icons, consistent 20px sizing and
-1.6px strokes. Decorative icons are hidden from assistive technology; their
-accompanying text or button label supplies the accessible name.
+Use named Lucide React imports at 16px with 1.75px strokes. Decorative icons are
+hidden from assistive technology.
 
-GSAP provides a short staggered hero entrance, an underline reveal, and once-only
-section entrances (18–22px movement, 0.65–0.85 seconds). Demo state changes and
-integration tabs use a 10px, 0.42-second fade and entrance. The scenario selector
-slides its active indicator over 0.38 seconds, and tool details expand and collapse
-over 0.32 seconds. Approval results and FAQ answers enter over 0.38 seconds. Copy
-confirmation briefly scales its checkmark. Hover arrows move 3px, cards lift 2–3px,
-and actions have press feedback. Keep native scrolling and avoid looping decoration.
+Motion is CSS driven. The hero headline rises word by word, then the copy and
+demo follow. Sections reveal once with a short rise and blur clear. Pill
+indicators slide under hovered nav links and selected tabs. Cards lift and show
+a pointer spotlight; primary buttons drift slightly toward the pointer, sweep a
+sheen, and nudge their arrow. Code lines enter in a stagger on tab change, and
+collapsible content animates its height.
 
-Motion runs only when `prefers-reduced-motion: no-preference` matches. MatchMedia
-contexts revert animations and scroll triggers on unmount or preference changes.
-HTML remains visible before JavaScript initializes.
+Under `prefers-reduced-motion: reduce`, animations and transitions collapse to
+instant and the demo jumps straight to its final state. HTML stays visible before
+JavaScript initializes; only off-screen reveal targets are hidden once motion is on.
 
 Docs use three expanded, collapsible navigation groups with native branch lines,
 a short Overview label, and a connected heading tree in the table of contents.

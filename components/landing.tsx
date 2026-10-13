@@ -1,15 +1,19 @@
 "use client";
 
+import "./landing.css";
 import Link from "next/link";
 import {
+  Fragment,
+  useCallback,
   useEffect,
   useRef,
   useState,
-  type RefObject,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type RefObject,
 } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,8 +25,11 @@ import {
   Menu,
   Plus,
   RotateCcw,
+  Send,
+  ShieldCheck,
   Sparkles,
   Terminal,
+  Workflow,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -31,118 +38,183 @@ import { AgentdockBrand } from "@/components/brand";
 const icons = {
   arrow: ArrowRight,
   external: ArrowUpRight,
-  code: Code2,
   check: Check,
-  copy: Copy,
-  terminal: Terminal,
-  layers: Layers,
-  spark: Sparkles,
   chevron: ChevronRight,
-  refresh: RotateCcw,
-  close: X,
+  code: Code2,
+  copy: Copy,
+  layers: Layers,
   menu: Menu,
   plus: Plus,
+  refresh: RotateCcw,
+  send: Send,
+  shield: ShieldCheck,
+  spark: Sparkles,
+  terminal: Terminal,
+  workflow: Workflow,
+  close: X,
 } satisfies Record<string, LucideIcon>;
 
 type IconName = keyof typeof icons;
-function Icon({
-  name,
-  className = "",
-}: {
-  name: IconName;
-  className?: string;
-}) {
+
+function Icon({ name, className = "" }: { name: IconName; className?: string }) {
   const Component = icons[name];
   return (
     <Component
-      className={`ad-icon ${className}`}
-      strokeWidth={1.6}
+      className={`ad-icon ${className}`.trim()}
+      strokeWidth={1.75}
       aria-hidden="true"
     />
   );
 }
 
-function useLandingMotion(root: RefObject<HTMLDivElement | null>) {
+/* ------------------------------------------------------------------ */
+/* Motion helpers                                                      */
+/* ------------------------------------------------------------------ */
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/** Reveals `[data-reveal]` elements once as they enter the viewport. */
+function useReveal(root: RefObject<HTMLElement | null>) {
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const media = gsap.matchMedia();
-    media.add(
-      "(prefers-reduced-motion: no-preference)",
-      () => {
-        const intro = gsap.timeline({
-          defaults: {
-            ease: "power2.out",
-            duration: 0.65,
-            clearProps: "transform,opacity",
-          },
-        });
-        intro
-          .from(
-            ".ad-hero-copy > :not(h1)",
-            { y: 12, opacity: 0, stagger: 0.07 },
-            0.08,
-          )
-          .from(".ad-hero h1", { y: 18, opacity: 0 }, 0)
-          .from(".ad-preview-wrap", { y: 22, opacity: 0, duration: 0.85 }, 0.18)
-          .from(
-            ".ad-hero h1 svg",
-            { scaleX: 0, transformOrigin: "left center", duration: 0.7 },
-            0.35,
-          );
-        // Animate each section independently; keep native scrolling and document flow.
-        root.current
-          ?.querySelectorAll<HTMLElement>(".ad-section, .ad-final")
-          .forEach((section) => {
-            gsap.from(section.children, {
-              y: 18,
-              opacity: 0,
-              duration: 0.65,
-              stagger: 0.09,
-              ease: "power2.out",
-              scrollTrigger: { trigger: section, start: "top 88%", once: true },
-              clearProps: "transform,opacity",
-            });
-          });
+    const node = root.current;
+    if (!node) return;
+    const targets = node.querySelectorAll<HTMLElement>("[data-reveal]");
+    if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
+      targets.forEach((target) => target.classList.add("is-in"));
+      return;
+    }
+    node.dataset.motion = "on";
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-in");
+          observer.unobserve(entry.target);
+        }
       },
-      root,
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
     );
-    return () => media.revert();
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
   }, [root]);
 }
 
-function useContentMotion(root: RefObject<HTMLElement | null>, state: string) {
+/** Tracks scroll progress and whether the page has left the top. */
+function useScrollState(root: RefObject<HTMLElement | null>) {
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const media = gsap.matchMedia();
-    media.add(
-      "(prefers-reduced-motion: no-preference)",
-      () => {
-        if (!root.current) return;
-        gsap.from(root.current.children, {
-          y: 10,
-          opacity: 0,
-          duration: 0.42,
-          stagger: 0.06,
-          ease: "power2.out",
-          clearProps: "transform,opacity",
-        });
-      },
-      root,
-    );
-    return () => media.revert();
-  }, [root, state]);
+    let frame = 0;
+    function update() {
+      frame = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = max > 0 ? window.scrollY / max : 0;
+      root.current?.style.setProperty("--ad-progress", progress.toFixed(4));
+      setScrolled(window.scrollY > 8);
+    }
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [root]);
+  return scrolled;
 }
+
+/** Writes pointer coordinates to CSS variables for spotlight surfaces. */
+function trackPointer(event: ReactPointerEvent<HTMLElement>) {
+  const target = event.currentTarget;
+  const rect = target.getBoundingClientRect();
+  target.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+  target.style.setProperty("--my", `${event.clientY - rect.top}px`);
+}
+
+/** Nudges an element a few pixels toward the pointer. */
+function magnetize(event: ReactPointerEvent<HTMLElement>) {
+  if (event.pointerType !== "mouse") return;
+  const target = event.currentTarget;
+  const rect = target.getBoundingClientRect();
+  const x = (event.clientX - rect.left - rect.width / 2) / rect.width;
+  const y = (event.clientY - rect.top - rect.height / 2) / rect.height;
+  target.style.setProperty("--tx", `${(x * 6).toFixed(2)}px`);
+  target.style.setProperty("--ty", `${(y * 5).toFixed(2)}px`);
+}
+
+function demagnetize(event: ReactPointerEvent<HTMLElement>) {
+  event.currentTarget.style.setProperty("--tx", "0px");
+  event.currentTarget.style.setProperty("--ty", "0px");
+}
+
+const magnetic = { onPointerMove: magnetize, onPointerLeave: demagnetize };
+
+/** Moves a pill indicator under the hovered or selected item of a group. */
+function useIndicator<T extends HTMLElement>(
+  container: RefObject<T | null>,
+  selector: string,
+  active?: string,
+) {
+  const place = useCallback(
+    (item: HTMLElement | null) => {
+      const node = container.current;
+      if (!node) return;
+      if (!item) {
+        node.style.setProperty("--pill-o", "0");
+        return;
+      }
+      node.style.setProperty("--pill-x", `${item.offsetLeft}px`);
+      node.style.setProperty("--pill-w", `${item.offsetWidth}px`);
+      node.style.setProperty("--pill-o", "1");
+    },
+    [container],
+  );
+  const reset = useCallback(() => {
+    const node = container.current;
+    if (!node) return;
+    const selected = active
+      ? node.querySelector<HTMLElement>(`${selector}[data-key="${active}"]`)
+      : null;
+    place(selected);
+  }, [active, container, place, selector]);
+  useEffect(() => {
+    reset();
+    const node = container.current;
+    if (!node || !("ResizeObserver" in window)) return;
+    const observer = new ResizeObserver(reset);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [container, reset]);
+  return { place, reset };
+}
+
+/* ------------------------------------------------------------------ */
+/* Copy                                                                */
+/* ------------------------------------------------------------------ */
 
 function CopyButton({
   value,
   label = "Copy",
+  showLabel = false,
+  tone = "light",
 }: {
   value: string;
   label?: string;
+  showLabel?: boolean;
+  tone?: "light" | "dark";
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
   useEffect(() => {
     if (status === "idle") return;
-    const timer = setTimeout(() => setStatus("idle"), 2500);
+    const timer = setTimeout(() => setStatus("idle"), 2000);
     return () => clearTimeout(timer);
   }, [status]);
   async function copy() {
@@ -153,253 +225,564 @@ function CopyButton({
       setStatus("failed");
     }
   }
+  const message =
+    status === "copied"
+      ? "Copied"
+      : status === "failed"
+        ? "Select to copy"
+        : label;
   return (
     <button
-      className="ad-copy"
+      type="button"
+      className={`ad-copy ad-copy-${tone} ${showLabel ? "has-label" : ""}`}
       data-status={status}
       onClick={copy}
-      aria-label={
-        status === "idle"
-          ? label
-          : status === "copied"
-            ? "Copied to clipboard"
-            : "Copy failed; select the code manually"
-      }
+      aria-label={status === "idle" ? label : message}
     >
-      <Icon name={status === "copied" ? "check" : "copy"} />
-      <span aria-live="polite">
-        {status === "copied"
-          ? "Copied"
-          : status === "failed"
-            ? "Select to copy"
-            : label}
+      <span className="ad-copy-icons" aria-hidden="true">
+        <Icon name="copy" className="ad-copy-idle" />
+        <Icon name="check" className="ad-copy-done" />
+      </span>
+      {showLabel && <span className="ad-copy-label">{message}</span>}
+      {!showLabel && (
+        <span className="ad-copy-tip" aria-hidden="true">
+          {status === "idle" ? "Copy" : message}
+        </span>
+      )}
+      <span className="ad-sr" aria-live="polite">
+        {status === "idle" ? "" : message}
       </span>
     </button>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Hero demo: a simulated event stream driving a chat interface        */
+/* ------------------------------------------------------------------ */
+
 const scenarios = {
   research: {
     label: "Research",
-    prompt: "Find the highlights. Draft an update for the team.",
+    prompt: "Find this week's release highlights and draft a team update.",
     tool: "search_documents",
-    summary: "3 documents found",
-    title: "Ready to share the highlights",
-    text: "I found the release notes and pulled together the key updates. Here’s the draft for your review.",
+    summary: "3 documents",
+    detail: "release-notes.md, changelog.md, roadmap.md",
+    text: "I pulled the key changes from the release notes and changelog. The draft covers the new approval flow, faster streaming, and two bug fixes.",
+    interrupt: "send_email",
     action: "Send the team update",
-    detail: "To: team@example.com",
-    result:
-      "Update sent. The team has the highlights, with links to all three source documents.",
-    rejected:
-      "Draft saved. The update wasn’t sent. You can revise it before sharing.",
+    target: "team@example.com",
+    approved: "Update sent to the team with links to all three documents.",
+    declined: "Draft kept. Nothing was sent.",
   },
   support: {
     label: "Support",
-    prompt: "Review order #1042 and prepare a customer reply.",
+    prompt: "Check order #1042 and prepare a reply for the customer.",
     tool: "lookup_order",
-    summary: "Order #1042 found",
-    title: "A reply, with the right context",
-    text: "The order is on its way. I drafted a reply with the shipment status and tracking details.",
+    summary: "Order #1042",
+    detail: "Shipped Tuesday, arriving Friday, tracking 1Z84",
+    text: "The order shipped on Tuesday and should arrive Friday. I drafted a reply with the tracking link and delivery estimate.",
+    interrupt: "send_reply",
     action: "Send the customer reply",
-    detail: "To: customer@example.com",
-    result:
-      "Reply sent. The customer now has their tracking details and delivery estimate.",
-    rejected: "Reply saved as a draft. No message was sent to the customer.",
+    target: "customer@example.com",
+    approved: "Reply sent with tracking details and the delivery estimate.",
+    declined: "Reply kept as a draft. The customer was not contacted.",
   },
   code: {
     label: "Code",
-    prompt: "Review the changes and draft a pull request.",
+    prompt: "Review the branch and open a draft pull request.",
     tool: "read_diff",
-    summary: "4 files reviewed",
-    title: "Changes reviewed. Draft ready.",
-    text: "The changes add a loading state and improve keyboard navigation. I’ve prepared a pull request summary.",
-    action: "Open the draft pull request",
-    detail: "Branch: improve-chat-experience",
-    result:
-      "Draft pull request created with a summary of the changes and review notes.",
-    rejected: "Summary saved. No pull request was created.",
+    summary: "4 files",
+    detail: "composer.tsx, message-list.tsx, +2 more",
+    text: "The branch adds a loading state to the composer and improves keyboard navigation in the message list. The summary and review notes are ready.",
+    interrupt: "open_pull_request",
+    action: "Open a draft pull request",
+    target: "improve-chat-experience",
+    approved: "Draft pull request opened with the summary and review notes.",
+    declined: "Summary kept. No pull request was opened.",
   },
 };
+
 type Scenario = keyof typeof scenarios;
-function AgentPreview() {
-  const [scenario, setScenario] = useState<Scenario>("research");
-  const [phase, setPhase] = useState<
-    "review" | "running" | "done" | "rejected"
-  >("review");
-  const [expanded, setExpanded] = useState(false);
-  const data = scenarios[scenario];
-  const transcriptRef = useRef<HTMLDivElement>(null);
-  useContentMotion(transcriptRef, scenario);
-  useEffect(() => {
-    if (phase !== "running") return;
-    const timer = setTimeout(() => setPhase("done"), 1200);
-    return () => clearTimeout(timer);
-  }, [phase]);
-  function choose(value: Scenario) {
-    setScenario(value);
-    setPhase("review");
-    setExpanded(false);
+const scenarioKeys = Object.keys(scenarios) as Scenario[];
+
+type DemoUi = {
+  tool: "idle" | "running" | "done";
+  chars: number;
+  approval: "hidden" | "pending" | "approved" | "declined";
+  action: "idle" | "running" | "done";
+  status: "idle" | "working" | "waiting" | "done";
+};
+
+type DemoEvent = {
+  id: number;
+  at: number;
+  type: string;
+  detail: string;
+  count?: number;
+};
+
+type DemoStep = {
+  wait: number;
+  type: string;
+  detail: string;
+  ui?: (ui: DemoUi) => Partial<DemoUi>;
+};
+
+const idleUi: DemoUi = {
+  tool: "idle",
+  chars: 0,
+  approval: "hidden",
+  action: "idle",
+  status: "idle",
+};
+
+function startSteps(key: Scenario): DemoStep[] {
+  const data = scenarios[key];
+  const words = data.text.split(" ");
+  const deltas: DemoStep[] = [];
+  for (let index = 0; index < words.length; index += 3) {
+    const chars = words.slice(0, index + 3).join(" ").length;
+    deltas.push({
+      wait: 90,
+      type: "message.part.delta",
+      detail: "text",
+      ui: () => ({ chars }),
+    });
   }
+  return [
+    {
+      wait: 250,
+      type: "run.started",
+      detail: "thread_8f2c",
+      ui: () => ({ status: "working" }),
+    },
+    {
+      wait: 380,
+      type: "tool.called",
+      detail: data.tool,
+      ui: () => ({ tool: "running" }),
+    },
+    {
+      wait: 1000,
+      type: "tool.completed",
+      detail: data.summary,
+      ui: () => ({ tool: "done" }),
+    },
+    { wait: 320, type: "message.started", detail: "assistant" },
+    ...deltas,
+    {
+      wait: 200,
+      type: "message.completed",
+      detail: `${data.text.length} chars`,
+      ui: () => ({ chars: data.text.length }),
+    },
+    {
+      wait: 420,
+      type: "interrupt.required",
+      detail: data.interrupt,
+      ui: () => ({ approval: "pending" }),
+    },
+    {
+      wait: 160,
+      type: "run.paused",
+      detail: "awaiting approval",
+      ui: () => ({ status: "waiting" }),
+    },
+  ];
+}
+
+function resumeSteps(key: Scenario, approved: boolean): DemoStep[] {
+  const data = scenarios[key];
+  const resolved: DemoStep[] = [
+    {
+      wait: 120,
+      type: "run.started",
+      detail: "resume",
+      ui: () => ({ status: "working" }),
+    },
+    {
+      wait: 240,
+      type: "interrupt.resolved",
+      detail: approved ? "approved" : "declined",
+      ui: () =>
+        approved
+          ? { approval: "approved", action: "running" }
+          : { approval: "declined" },
+    },
+  ];
+  const finish: DemoStep = {
+    wait: 260,
+    type: "run.completed",
+    detail: "ok",
+    ui: () => ({ status: "done" }),
+  };
+  if (!approved) return [...resolved, finish];
+  return [
+    ...resolved,
+    { wait: 300, type: "tool.called", detail: data.interrupt },
+    {
+      wait: 900,
+      type: "tool.completed",
+      detail: "ok",
+      ui: () => ({ action: "done" }),
+    },
+    finish,
+  ];
+}
+
+function eventTone(type: string) {
+  if (type.startsWith("interrupt")) return "amber";
+  if (type.startsWith("tool")) return "teal";
+  if (type.startsWith("message")) return "violet";
+  if (type === "run.completed") return "green";
+  return "ink";
+}
+
+type DemoRun = {
+  scenario: Scenario;
+  mode: "start" | "approve" | "decline";
+  nonce: number;
+};
+
+function AgentDemo() {
+  const [scenario, setScenario] = useState<Scenario>("research");
+  const [run, setRun] = useState<DemoRun | null>(null);
+  const [ui, setUi] = useState<DemoUi>(idleUi);
+  const [events, setEvents] = useState<DemoEvent[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLOListElement>(null);
+  const clock = useRef(0);
+  const ids = useRef(0);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const tabs = useIndicator(tabsRef, "button", scenario);
+  const data = scenarios[scenario];
+
+  // Start the first run once the demo is on screen.
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setRun({ scenario: "research", mode: "start", nonce: 0 });
+        observer.disconnect();
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!run) return;
+    const instant = prefersReducedMotion();
+    const steps =
+      run.mode === "start"
+        ? startSteps(run.scenario)
+        : resumeSteps(run.scenario, run.mode === "approve");
+    if (run.mode === "start") {
+      clock.current = 0;
+      setUi(idleUi);
+      setEvents([]);
+      setExpanded(false);
+    }
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let elapsed = 0;
+    for (const step of steps) {
+      elapsed += instant ? 0 : step.wait;
+      timers.push(
+        setTimeout(() => {
+          clock.current += step.wait;
+          const at = clock.current;
+          if (step.ui) setUi((current) => ({ ...current, ...step.ui!(current) }));
+          setEvents((current) => {
+            const last = current[current.length - 1];
+            if (last && last.type === step.type && step.type === "message.part.delta") {
+              return [
+                ...current.slice(0, -1),
+                { ...last, at, count: (last.count ?? 1) + 1 },
+              ];
+            }
+            ids.current += 1;
+            return [
+              ...current,
+              { id: ids.current, at, type: step.type, detail: step.detail },
+            ];
+          });
+        }, elapsed),
+      );
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [run]);
+
+  // Keep the newest event in view inside the log, never scrolling the page.
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log) return;
+    log.scrollTo({
+      top: log.scrollHeight,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [events]);
+
+  function choose(key: Scenario) {
+    setScenario(key);
+    setRun((current) => ({
+      scenario: key,
+      mode: "start",
+      nonce: (current?.nonce ?? 0) + 1,
+    }));
+  }
+
+  function resolve(mode: "approve" | "decline") {
+    setRun((current) => ({
+      scenario,
+      mode,
+      nonce: (current?.nonce ?? 0) + 1,
+    }));
+  }
+
+  function onTabKey(event: ReactKeyboardEvent<HTMLButtonElement>, key: Scenario) {
+    const index = scenarioKeys.indexOf(key);
+    const next =
+      event.key === "ArrowRight"
+        ? scenarioKeys[(index + 1) % scenarioKeys.length]
+        : event.key === "ArrowLeft"
+          ? scenarioKeys[(index + scenarioKeys.length - 1) % scenarioKeys.length]
+          : null;
+    if (!next) return;
+    event.preventDefault();
+    choose(next);
+    tabsRef.current
+      ?.querySelector<HTMLButtonElement>(`[data-key="${next}"]`)
+      ?.focus();
+  }
+
+  const statusLabel = {
+    idle: "Ready",
+    working: "Streaming",
+    waiting: "Waiting for you",
+    done: "Complete",
+  }[ui.status];
+
+  const streaming = ui.chars > 0 && ui.chars < data.text.length;
+
   return (
-    <div className="ad-preview-wrap">
-      <div className="ad-preview-orbit" aria-hidden="true" />
-      <div className="ad-preview">
-        <div className="ad-window-bar">
-          <span className="ad-window-dots">
-            <i />
-            <i />
-            <i />
-          </span>
-          <span>your-app / assistant</span>
-          <span className="ad-preview-label">INTERACTIVE PREVIEW</span>
-        </div>
-        <div className="ad-preview-heading">
-          <span className="ad-agent-avatar">
-            <Icon name="spark" />
-          </span>
-          <div>
-            <strong>Your agent, at work.</strong>
-            <span>Powered by your graph. Designed for your app.</span>
-          </div>
-          <span className="ad-online">
-            <i /> Demo
-          </span>
-        </div>
-        <div
-          className="ad-scenarios"
-          style={
-            {
-              "--ad-choice": Object.keys(scenarios).indexOf(scenario),
-            } as CSSProperties
-          }
-          role="group"
-          aria-label="Choose a demo scenario"
-        >
-          <span className="ad-scenario-indicator" aria-hidden="true" />
-          {(Object.keys(scenarios) as Scenario[]).map((key) => (
-            <button
-              key={key}
-              aria-pressed={scenario === key}
-              onClick={() => choose(key)}
-            >
-              {scenarios[key].label}
-            </button>
-          ))}
-        </div>
-        <div className="ad-transcript" ref={transcriptRef}>
-          <div className="ad-user-message">
-            <span>YOU</span>
-            <p>{data.prompt}</p>
-          </div>
-          <div className="ad-agent-message">
-            <span className="ad-mini-mark">
-              <Icon name="spark" />
-            </span>
-            <div>
+    <div className="ad-demo" ref={rootRef}>
+      <div className="ad-demo-glow" aria-hidden="true" />
+      <div className="ad-demo-frame">
+        <div className="ad-demo-bar">
+          <div
+            className="ad-segment"
+            ref={tabsRef}
+            role="group"
+            aria-label="Choose a demo scenario"
+          >
+            <span className="ad-pill-indicator" aria-hidden="true" />
+            {scenarioKeys.map((key) => (
               <button
-                className="ad-tool-disclosure"
-                onClick={() => setExpanded(!expanded)}
-                aria-expanded={expanded}
-                aria-controls="demo-tool-detail"
+                key={key}
+                type="button"
+                data-key={key}
+                aria-pressed={scenario === key}
+                tabIndex={scenario === key ? 0 : -1}
+                onClick={() => choose(key)}
+                onKeyDown={(event) => onTabKey(event, key)}
               >
-                <Icon name="check" />
-                <code>{data.tool}</code>
-                <span>{data.summary}</span>
-                <Icon name="chevron" className={expanded ? "is-open" : ""} />
+                {scenarios[key].label}
               </button>
-              <div
-                id="demo-tool-detail"
-                className={`ad-tool-reveal ${expanded ? "is-open" : ""}`}
-                aria-hidden={!expanded}
-                inert={!expanded}
-              >
-                <div>
-                  <p className="ad-tool-detail">
-                    Example tool result · {data.summary}. Your app supplies the
-                    tools and their data.
-                  </p>
-                </div>
-              </div>
-              <h3>{data.title}</h3>
-              <p>{data.text}</p>
-              {phase === "review" ? (
-                <div className="ad-approval">
-                  <div className="ad-approval-title">
-                    <span className="ad-approval-dot" />
-                    Approval required<span>YOUR CALL</span>
-                  </div>
-                  <strong>{data.action}</strong>
-                  <span className="ad-approval-detail">{data.detail}</span>
-                  <div className="ad-approval-actions">
-                    <button onClick={() => setPhase("running")}>
-                      <Icon name="check" />
-                      Approve & continue
-                    </button>
-                    <button onClick={() => setPhase("rejected")}>
-                      Decline
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key={phase}
-                  className={`ad-demo-result ${phase}`}
-                  role="status"
-                >
-                  {phase === "running" ? (
-                    <>
-                      <span className="ad-loader" />
-                      Continuing the example…
-                    </>
-                  ) : (
-                    <>
-                      <Icon name={phase === "done" ? "check" : "close"} />
-                      <p>{phase === "done" ? data.result : data.rejected}</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        </div>
-        <div className="ad-demo-composer">
-          <span>
-            {phase === "review"
-              ? "Try approving or declining the action"
-              : phase === "running"
-                ? "The example is running…"
-                : "Ready for another example?"}
+          <span className="ad-demo-url" aria-hidden="true">
+            your-app.com/assistant
           </span>
           <button
-            onClick={() => {
-              setPhase("review");
-              setExpanded(false);
-            }}
-            aria-label="Replay demo"
-            disabled={phase === "running"}
+            type="button"
+            className="ad-icon-button"
+            onClick={() => choose(scenario)}
+            aria-label="Replay this scenario"
           >
             <Icon name="refresh" />
           </button>
         </div>
-        <div className="ad-preview-foot">
-          <span>
-            <i />
-            Streaming · Tools · Human approval
-          </span>
-          <span>Simulated locally. No actions are sent.</span>
+
+        <div className="ad-demo-body">
+          <div className="ad-chat">
+            <div className="ad-chat-head">
+              <span className="ad-chat-avatar" aria-hidden="true">
+                <Icon name="spark" />
+              </span>
+              <span className="ad-chat-title">
+                <strong>Assistant</strong>
+                <span>Runs your graph</span>
+              </span>
+              <span className="ad-status" data-status={ui.status}>
+                <i aria-hidden="true" />
+                {statusLabel}
+              </span>
+            </div>
+
+            <div className="ad-chat-scroll">
+              <p className="ad-bubble-user" key={`prompt-${scenario}-${run?.nonce}`}>
+                {data.prompt}
+              </p>
+
+              {ui.tool !== "idle" && (
+                <div className="ad-tool" data-state={ui.tool}>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(!expanded)}
+                    aria-expanded={expanded}
+                    aria-controls="ad-tool-detail"
+                    disabled={ui.tool !== "done"}
+                  >
+                    <span className="ad-tool-mark" aria-hidden="true">
+                      {ui.tool === "done" ? <Icon name="check" /> : <span className="ad-spinner" />}
+                    </span>
+                    <code>{data.tool}</code>
+                    <span className="ad-tool-summary">
+                      {ui.tool === "done" ? data.summary : "Running"}
+                    </span>
+                    <Icon name="chevron" className="ad-tool-chevron" />
+                  </button>
+                  <div
+                    id="ad-tool-detail"
+                    className="ad-collapse"
+                    data-open={expanded}
+                    inert={!expanded}
+                  >
+                    <div>
+                      <p>{data.detail}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {ui.chars > 0 && (
+                <p className="ad-bubble-agent">
+                  {data.text.slice(0, ui.chars)}
+                  {streaming && <span className="ad-caret" aria-hidden="true" />}
+                </p>
+              )}
+
+              {ui.approval === "pending" && (
+                <div className="ad-approval" role="group" aria-label="Approval required">
+                  <div className="ad-approval-head">
+                    <Icon name="shield" />
+                    <span>Needs your approval</span>
+                  </div>
+                  <strong>{data.action}</strong>
+                  <span className="ad-approval-target">{data.target}</span>
+                  <div className="ad-approval-actions">
+                    <button
+                      type="button"
+                      className="ad-btn ad-btn-primary ad-btn-sm"
+                      onClick={() => resolve("approve")}
+                    >
+                      <Icon name="check" />
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className="ad-btn ad-btn-ghost ad-btn-sm"
+                      onClick={() => resolve("decline")}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {ui.approval === "approved" && (
+                <div className="ad-outcome" data-state={ui.action} role="status">
+                  {ui.action === "done" ? (
+                    <>
+                      <Icon name="check" />
+                      <span>{data.approved}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="ad-spinner" aria-hidden="true" />
+                      <span>Running {data.interrupt}</span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {ui.approval === "declined" && (
+                <div className="ad-outcome" data-state="declined" role="status">
+                  <Icon name="close" />
+                  <span>{data.declined}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="ad-composer" aria-hidden="true">
+              <span>
+                {ui.status === "waiting"
+                  ? "Approve or decline to continue"
+                  : ui.status === "done"
+                    ? "Pick another scenario or replay"
+                    : "Ask a follow-up"}
+              </span>
+              <span className="ad-composer-send">
+                <Icon name="send" />
+              </span>
+            </div>
+          </div>
+
+          <div className="ad-stream" aria-label="Agentdock events for this run">
+            <div className="ad-stream-head">
+              <span className="ad-stream-title">
+                <i aria-hidden="true" data-live={ui.status === "working"} />
+                Event stream
+              </span>
+              <span className="ad-stream-count">{events.length} events</span>
+            </div>
+            <ol className="ad-stream-log" ref={logRef}>
+              {events.map((event) => (
+                <li key={event.id} data-tone={eventTone(event.type)}>
+                  <span className="ad-stream-time">
+                    {(event.at / 1000).toFixed(2)}s
+                  </span>
+                  <span className="ad-stream-dot" aria-hidden="true" />
+                  <code>{event.type}</code>
+                  <span className="ad-stream-detail">
+                    {event.count ? (
+                      <span className="ad-stream-tally" key={event.count}>
+                        x{event.count}
+                      </span>
+                    ) : (
+                      event.detail
+                    )}
+                  </span>
+                </li>
+              ))}
+              {events.length === 0 && (
+                <li className="ad-stream-empty">Waiting for the run to start</li>
+              )}
+            </ol>
+            <p className="ad-stream-foot">
+              The same events reach Node, Web Response, and React clients.
+            </p>
+          </div>
         </div>
       </div>
-      <div className="ad-preview-caption">
-        <span className="ad-caption-line" />A little infrastructure. A much
-        better experience.
-      </div>
+      <p className="ad-demo-note">
+        A local simulation. Approve or decline to watch the run resume.
+      </p>
     </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Code samples                                                        */
+/* ------------------------------------------------------------------ */
+
 const examples = {
   node: {
-    label: "Node / Express",
+    label: "Node",
     file: "controller.ts",
     code: `import { Agentdock } from "@agentdock-ai/agentdock";
 
@@ -443,38 +826,42 @@ export function Assistant() {
 }`,
   },
 };
+
 type Example = keyof typeof examples;
+const exampleKeys = Object.keys(examples) as Example[];
+const keywordPattern =
+  /(\/\/.*|"[^"]*"|\b(?:import|from|const|await|return|export|function|type|new)\b)/g;
+
 function HighlightedCode({ code }: { code: string }) {
   return (
     <code>
       {code.split("\n").map((line, index) => (
-        <span className="ad-code-line" key={index}>
+        <span
+          className="ad-code-line"
+          key={index}
+          style={{ "--i": index } as CSSProperties}
+        >
           <span className="ad-line-number" aria-hidden="true">
             {index + 1}
           </span>
           <span>
-            {line
-              .split(
-                /(\/\/.*|"[^"]*"|\b(?:import|from|const|await|return|export|function)\b)/g,
-              )
-              .map((token, part) => (
-                <span
-                  key={part}
-                  className={
-                    token.startsWith("//")
-                      ? "ad-syntax-comment"
-                      : token.startsWith('"')
-                        ? "ad-syntax-string"
-                        : /^(import|from|const|await|return|export|function)$/.test(
-                              token,
-                            )
-                          ? "ad-syntax-keyword"
-                          : undefined
-                  }
-                >
-                  {token}
-                </span>
-              ))}
+            {line.split(keywordPattern).map((token, part) => (
+              <span
+                key={part}
+                className={
+                  token.startsWith("//")
+                    ? "ad-tok-comment"
+                    : token.startsWith('"')
+                      ? "ad-tok-string"
+                      : /^(import|from|const|await|return|export|function|type|new)$/.test(token)
+                        ? "ad-tok-keyword"
+                        : undefined
+                }
+              >
+                {token}
+              </span>
+            ))}
+            {line === "" ? " " : null}
           </span>
         </span>
       ))}
@@ -482,10 +869,94 @@ function HighlightedCode({ code }: { code: string }) {
   );
 }
 
+function CodePanel() {
+  const [example, setExample] = useState<Example>("node");
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useIndicator(tabsRef, "button", example);
+  function onKey(event: ReactKeyboardEvent<HTMLButtonElement>, key: Example) {
+    const index = exampleKeys.indexOf(key);
+    const next =
+      event.key === "ArrowRight"
+        ? exampleKeys[(index + 1) % exampleKeys.length]
+        : event.key === "ArrowLeft"
+          ? exampleKeys[(index + exampleKeys.length - 1) % exampleKeys.length]
+          : event.key === "Home"
+            ? exampleKeys[0]
+            : event.key === "End"
+              ? exampleKeys[exampleKeys.length - 1]
+              : null;
+    if (!next) return;
+    event.preventDefault();
+    setExample(next);
+    document.getElementById(`ad-tab-${next}`)?.focus();
+  }
+  return (
+    <div className="ad-code" data-reveal style={{ "--d": "120ms" } as CSSProperties}>
+      <div className="ad-code-head">
+        <div
+          className="ad-code-tabs"
+          ref={tabsRef}
+          role="tablist"
+          aria-label="Integration examples"
+        >
+          <span className="ad-pill-indicator" aria-hidden="true" />
+          {exampleKeys.map((key) => (
+            <button
+              key={key}
+              id={`ad-tab-${key}`}
+              type="button"
+              data-key={key}
+              role="tab"
+              aria-selected={example === key}
+              aria-controls="ad-code-panel"
+              tabIndex={example === key ? 0 : -1}
+              onClick={() => setExample(key)}
+              onKeyDown={(event) => onKey(event, key)}
+            >
+              {examples[key].label}
+            </button>
+          ))}
+        </div>
+        <CopyButton value={examples[example].code} label="Copy code" tone="dark" />
+      </div>
+      <div className="ad-code-file">
+        <Icon name="code" />
+        <span key={example}>{examples[example].file}</span>
+      </div>
+      <pre
+        id="ad-code-panel"
+        role="tabpanel"
+        aria-labelledby={`ad-tab-${example}`}
+        tabIndex={0}
+        key={example}
+      >
+        <HighlightedCode code={examples[example].code} />
+      </pre>
+      <div className="ad-code-foot">
+        <span>
+          {example === "react"
+            ? "Editable components from the npm installer"
+            : "Compiled graph in, canonical events out"}
+        </span>
+        <Link
+          className="ad-link"
+          href={example === "react" ? "/docs/ui" : "/docs/installation"}
+        >
+          Setup guide <Icon name="arrow" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* FAQ                                                                 */
+/* ------------------------------------------------------------------ */
+
 const faqs = [
   [
     "Is Agentdock an agent framework?",
-    "Agentdock serves a graph you build with LangGraph or LangChain. Those projects own execution, models, tools, checkpoints, and interrupts. Agentdock maps events and handles streaming transports, backpressure, cancellation, and response cleanup.",
+    "No. Agentdock serves a graph you build with LangGraph or LangChain. Those projects own execution, models, tools, checkpoints, and interrupts. Agentdock maps events and handles streaming transports, backpressure, cancellation, and response cleanup.",
   ],
   [
     "Can I use the core without the UI?",
@@ -501,9 +972,62 @@ const faqs = [
   ],
   [
     "Can I install Agentdock UI today?",
-    "Yes. From your React app, run npx @agentdock-ai/agentdock-ui add chat. The installer copies editable chat components into your app and installs any missing dependencies. See the UI guide for requirements and options.",
+    "Yes. From your React app, run npx @agentdock-ai/agentdock-ui add chat. The installer copies editable chat components into your app and installs any missing dependencies.",
   ],
-];
+] as const;
+
+function Faq() {
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <div className="ad-faq-list">
+      {faqs.map(([question, answer], index) => {
+        const isOpen = open === index;
+        return (
+          <div
+            className="ad-faq-item"
+            data-open={isOpen}
+            key={question}
+            data-reveal
+            style={{ "--d": `${index * 60}ms` } as CSSProperties}
+          >
+            <h3>
+              <button
+                type="button"
+                id={`ad-faq-q-${index}`}
+                aria-expanded={isOpen}
+                aria-controls={`ad-faq-a-${index}`}
+                onClick={() => setOpen(isOpen ? null : index)}
+              >
+                <span>{question}</span>
+                <span className="ad-faq-toggle" aria-hidden="true">
+                  <Icon name="plus" />
+                </span>
+              </button>
+            </h3>
+            <div
+              id={`ad-faq-a-${index}`}
+              className="ad-collapse"
+              data-open={isOpen}
+              role="region"
+              aria-labelledby={`ad-faq-q-${index}`}
+              inert={!isOpen}
+            >
+              <div>
+                <p>{answer}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
+
+const installCommand = "npm i @agentdock-ai/agentdock";
 
 const agentImplementationPrompt = `Read https://agentdock-ai.vercel.app/skills.md and the relevant Agentdock docs. Inspect my app, then ask me these unanswered questions and wait before coding:
 - Who will use the agent, and what should it help them do?
@@ -513,555 +1037,522 @@ const agentImplementationPrompt = `Read https://agentdock-ai.vercel.app/skills.m
 - What UI, file uploads, constraints, and success criteria do I need?
 Ask only what the code does not answer. After I respond, implement the smallest suitable solution with LangGraph and Agentdock; use Agentdock UI if a chat interface is needed. Keep secrets, authorization, trusted thread IDs, and persistence app-owned. Use canonical Agentdock events and a stable ChatAdapter. Verify relevant checks and summarize.`;
 
-export function LandingPage() {
+const navLinks = [
+  { href: "#how", label: "How it works", external: false },
+  { href: "/docs/ui", label: "UI components", external: false },
+  { href: "/docs/api-reference", label: "API", external: false },
+  {
+    href: "https://github.com/agentdock-ai/agentdock",
+    label: "GitHub",
+    external: true,
+  },
+];
+
+const stages = [
+  {
+    icon: "workflow" as const,
+    owner: "LangGraph",
+    title: "Your graph",
+    text: "Models, tools, checkpoints, and interrupts stay in the graph you already wrote.",
+  },
+  {
+    icon: "terminal" as const,
+    owner: "Agentdock core",
+    title: "One event stream",
+    text: "Graph output becomes canonical events, with backpressure, cancellation, and cleanup handled.",
+  },
+  {
+    icon: "layers" as const,
+    owner: "Agentdock UI or yours",
+    title: "Your interface",
+    text: "Render with editable React components, or consume the events in any client you build.",
+  },
+];
+
+const coreEvents = [
+  { type: "run.started", tone: "ink", tail: "check" },
+  { type: "tool.completed", tone: "teal", tail: "check" },
+  { type: "message.part.delta", tone: "violet", tail: "wave" },
+  { type: "interrupt.required", tone: "amber", tail: "turn" },
+] as const;
+
+function SectionHeading({
+  id,
+  title,
+  children,
+  aside,
+}: {
+  id: string;
+  title: ReactNode;
+  children?: ReactNode;
+  aside?: ReactNode;
+}) {
+  return (
+    <div className="ad-heading" data-reveal>
+      <div>
+        <h2 id={id}>{title}</h2>
+        {children && <p>{children}</p>}
+      </div>
+      {aside}
+    </div>
+  );
+}
+
+function HeroTitle({ text }: { text: string }) {
+  return (
+    <h1 id="hero-title" aria-label={text}>
+      {text.split(" ").map((word, index) => (
+        <Fragment key={index}>
+          <span className="ad-word" aria-hidden="true">
+            <span style={{ "--i": index } as CSSProperties}>{word}</span>
+          </span>{" "}
+        </Fragment>
+      ))}
+    </h1>
+  );
+}
+
+export function LandingPage({ className = "" }: { className?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [example, setExample] = useState<Example>("node");
-  const menuRef = useRef<HTMLButtonElement>(null);
   const siteRef = useRef<HTMLDivElement>(null);
-  const codeRef = useRef<HTMLPreElement>(null);
-  useLandingMotion(siteRef);
-  useContentMotion(codeRef, example);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const scrolled = useScrollState(siteRef);
+  const nav = useIndicator(navRef, "a");
+  useReveal(siteRef);
+
   useEffect(() => {
     if (!menuOpen) return;
-    function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        menuRef.current?.focus();
-      }
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuRef.current?.focus();
     }
-    document.addEventListener("keydown", escape);
-    return () => document.removeEventListener("keydown", escape);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [menuOpen]);
+
   return (
-    <div className="ad-site" ref={siteRef}>
+    <div className={`ad-site ${className}`.trim()} ref={siteRef}>
       <a className="ad-skip" href="#main-content">
         Skip to content
       </a>
-      <header className="ad-header ad-container">
-        <Link href="/" aria-label="Agentdock home">
-          <AgentdockBrand />
-        </Link>
-        <nav className="ad-nav" aria-label="Main navigation">
-          <a href="#stack">The stack</a>
-          <Link href="/docs/ui">UI components</Link>
-          <a href="https://github.com/agentdock-ai/agentdock">
-            GitHub <Icon name="external" />
-          </a>
-        </nav>
-        <Link href="/docs" className="ad-nav-cta">
-          Explore the docs <Icon name="arrow" />
-        </Link>
-        <button
-          ref={menuRef}
-          className="ad-menu-toggle"
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-navigation"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <Icon name={menuOpen ? "close" : "menu"} />
-        </button>
-        {menuOpen && (
+      <div className="ad-progress" aria-hidden="true" />
+
+      <header className="ad-header" data-scrolled={scrolled || menuOpen}>
+        <div className="ad-container ad-header-inner">
+          <Link href="/" aria-label="Agentdock home" className="ad-home">
+            <AgentdockBrand />
+          </Link>
           <nav
-            id="mobile-navigation"
-            className="ad-mobile-nav"
-            aria-label="Mobile navigation"
-            onClick={() => setMenuOpen(false)}
+            className="ad-nav"
+            aria-label="Main navigation"
+            ref={navRef}
+            onPointerLeave={nav.reset}
           >
-            <a href="#stack">The stack</a>
-            <Link href="/docs/ui">UI components</Link>
-            <a href="https://github.com/agentdock-ai/agentdock">
-              GitHub <Icon name="external" />
-            </a>
-            <Link href="/docs">
-              Explore the docs <Icon name="arrow" />
-            </Link>
+            <span className="ad-pill-indicator" aria-hidden="true" />
+            {navLinks.map((link) =>
+              link.external ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onPointerEnter={(event) => nav.place(event.currentTarget)}
+                >
+                  {link.label} <Icon name="external" />
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onPointerEnter={(event) => nav.place(event.currentTarget)}
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </nav>
-        )}
-      </header>
-      <main id="main-content">
-        <section className="ad-hero ad-container" aria-labelledby="hero-title">
-          <div className="ad-hero-copy">
-            <a href="#stack" className="ad-announcement">
-              <span />
-              Open source. Yours to build on.
-              <Icon name="arrow" />
-            </a>
-            <h1 id="hero-title">
-              Your agent.
-              <br />
-              Your product.
-              <br />
-              <span>Connected.</span>
-              <svg viewBox="0 0 340 16" fill="none" aria-hidden="true">
-                <path
-                  d="M3 11C88 2 231 2 336 8M17 15c94-8 222-9 307-4"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </h1>
-            <p>
-              Bring your LangGraph agent into your app.
-              <br className="ad-desktop-break" /> Stream every step. Put people
-              in control.
-              <br className="ad-desktop-break" /> Make the interface your own.
-            </p>
-            <div className="ad-hero-actions">
-              <Link
-                className="ad-button ad-button-primary"
-                href="/docs/quickstart"
-              >
-                Start building <Icon name="arrow" />
-              </Link>
-              <a href="#experience" className="ad-button ad-button-quiet">
-                Meet the UI <Icon name="layers" />
-              </a>
-            </div>
-            <div className="ad-install">
-              <code>npm i @agentdock-ai/agentdock</code>
-              <CopyButton
-                value="npm i @agentdock-ai/agentdock"
-                label="Copy install command"
-              />
-            </div>
-            <div className="ad-hero-meta">
-              <span>MIT licensed</span>
-              <span>TypeScript first</span>
-              <span>Your infrastructure</span>
-            </div>
-          </div>
-          <AgentPreview />
-        </section>
-        <div className="ad-built-with ad-container">
-          <span>Fits the tools you already use</span>
-          <div aria-label="Compatible technologies">
-            <strong>LangGraph</strong>
-            <strong>TypeScript</strong>
-            <strong>React</strong>
-            <strong>Tailwind CSS</strong>
-          </div>
+          <Link href="/docs" className="ad-btn ad-btn-primary ad-btn-sm ad-header-cta" {...magnetic}>
+            Read the docs <Icon name="arrow" />
+          </Link>
+          <button
+            ref={menuRef}
+            type="button"
+            className="ad-menu-toggle"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={menuOpen}
+            aria-controls="ad-mobile-nav"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <span data-open={menuOpen} aria-hidden="true">
+              <i />
+              <i />
+            </span>
+          </button>
         </div>
-        <section
-          id="stack"
-          className="ad-section ad-container"
-          aria-labelledby="stack-title"
+        <nav
+          id="ad-mobile-nav"
+          className="ad-mobile-nav"
+          data-open={menuOpen}
+          aria-label="Mobile navigation"
+          inert={!menuOpen}
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest("a")) setMenuOpen(false);
+          }}
         >
-          <div className="ad-section-heading">
-            <div>
-              <span className="ad-eyebrow">01 / THE CONNECTION</span>
-              <h2 id="stack-title">
-                From graph to interface.
-                <br />
-                <span>Without the glue code.</span>
-              </h2>
+          {navLinks.map((link, index) => (
+            <a
+              key={link.href}
+              href={link.href}
+              style={{ "--i": index } as CSSProperties}
+            >
+              {link.label}
+              <Icon name={link.external ? "external" : "arrow"} />
+            </a>
+          ))}
+          <Link
+            href="/docs"
+            className="ad-btn ad-btn-primary"
+            style={{ "--i": navLinks.length } as CSSProperties}
+          >
+            Read the docs <Icon name="arrow" />
+          </Link>
+        </nav>
+      </header>
+
+      <main id="main-content">
+        <section className="ad-hero" aria-labelledby="hero-title">
+          <div className="ad-hero-backdrop" aria-hidden="true" />
+          <div className="ad-container ad-hero-grid">
+            <div className="ad-hero-copy">
+              <a
+                className="ad-badge"
+                href="https://github.com/agentdock-ai/agentdock"
+              >
+                <i aria-hidden="true" />
+                Open source and MIT licensed
+                <Icon name="arrow" />
+              </a>
+              <HeroTitle text="Put your LangGraph agent inside your product." />
             </div>
-            <p>
-              Three focused layers. One shared event contract.
-              <br />
-              Keep your agent logic and your product decisions
-              <br className="ad-desktop-break" /> right where they belong.
-            </p>
+            <div className="ad-hero-side">
+              <p>
+                Agentdock serves a compiled graph as one typed event stream.
+                Pipe it to Node, return a Web Response, or render it with
+                editable React chat components.
+              </p>
+              <div className="ad-hero-actions">
+                <Link
+                  className="ad-btn ad-btn-primary"
+                  href="/docs/quickstart"
+                  {...magnetic}
+                >
+                  Start building <Icon name="arrow" />
+                </Link>
+                <div className="ad-install">
+                  <span aria-hidden="true">$</span>
+                  <code>{installCommand}</code>
+                  <CopyButton value={installCommand} label="Copy install command" />
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="ad-flow">
-            <article>
-              <div className="ad-flow-top">
-                <span>01</span>
-                <Icon name="layers" />
-              </div>
-              <h3>Build your agent</h3>
-              <p>
-                Models, tools, and checkpoints.
-                <br />
-                The LangGraph graph you already own.
-              </p>
-              <span className="ad-flow-tag">LANGCHAIN + LANGGRAPH</span>
-            </article>
-            <div className="ad-flow-connector" aria-hidden="true">
-              <Icon name="arrow" />
-            </div>
-            <article className="ad-flow-core">
-              <div className="ad-flow-top">
-                <span>02</span>
-                <Icon name="terminal" />
-              </div>
-              <h3>Connect with Agentdock</h3>
-              <p>
-                A consistent event stream, with serving
-                <br />
-                mechanics taken care of.
-              </p>
-              <span className="ad-flow-tag">AGENTDOCK CORE</span>
-            </article>
-            <div className="ad-flow-connector" aria-hidden="true">
-              <Icon name="arrow" />
-            </div>
-            <article>
-              <div className="ad-flow-top">
-                <span>03</span>
-                <Icon name="spark" />
-              </div>
-              <h3>Make it your experience</h3>
-              <p>
-                Editable React chat components.
-                <br />
-                Or build your own interface.
-              </p>
-              <span className="ad-flow-tag">AGENTDOCK UI / YOUR UI</span>
-            </article>
+          <div className="ad-container ad-hero-demo">
+            <AgentDemo />
           </div>
-          <div className="ad-ownership">
-            <Icon name="check" />
+        </section>
+
+        <div className="ad-container ad-fits" data-reveal>
+          <span>Fits the stack you already use</span>
+          <ul aria-label="Compatible technologies">
+            {["LangGraph", "TypeScript", "Node.js", "React", "Tailwind CSS"].map(
+              (name) => (
+                <li key={name}>{name}</li>
+              ),
+            )}
+          </ul>
+        </div>
+
+        <section id="how" className="ad-section ad-container" aria-labelledby="how-title">
+          <SectionHeading id="how-title" title="Three layers. One event contract.">
+            Your graph does the thinking. Agentdock carries every step to the
+            client. Your interface decides how it looks.
+          </SectionHeading>
+          <ol className="ad-stages">
+            {stages.map((stage, index) => (
+              <li
+                key={stage.title}
+                className="ad-stage ad-spot"
+                data-core={index === 1}
+                data-reveal
+                style={{ "--d": `${index * 110}ms` } as CSSProperties}
+                onPointerMove={trackPointer}
+              >
+                <div className="ad-stage-top">
+                  <span className="ad-stage-icon">
+                    <Icon name={stage.icon} />
+                  </span>
+                  <span className="ad-stage-step">Step {index + 1}</span>
+                </div>
+                <h3>{stage.title}</h3>
+                <p>{stage.text}</p>
+                <span className="ad-stage-owner">{stage.owner}</span>
+                {index < stages.length - 1 && (
+                  <span className="ad-stage-link" aria-hidden="true">
+                    <i />
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+          <div className="ad-ownership" data-reveal>
+            <span className="ad-ownership-icon">
+              <Icon name="shield" />
+            </span>
             <p>
-              Your application owns authentication, requests, thread identity,
-              and infrastructure. Always.
+              Authentication, requests, thread identity, and infrastructure stay
+              with your application.
             </p>
           </div>
         </section>
-        <section
-          id="experience"
-          className="ad-section ad-container"
-          aria-labelledby="experience-title"
-        >
-          <div className="ad-section-heading">
-            <div>
-              <span className="ad-eyebrow">
-                02 / SMALL PIECES. BIG POSSIBILITIES.
-              </span>
-              <h2 id="experience-title">
-                The plumbing, handled.
-                <br />
-                <span>The experience, yours.</span>
-              </h2>
-            </div>
-            <Link href="/docs/ui" className="ad-text-link">
-              Explore the UI guide <Icon name="arrow" />
-            </Link>
-          </div>
-          <div className="ad-product-grid">
-            <article className="ad-product ad-product-core">
+
+        <section className="ad-section ad-container" aria-labelledby="products-title">
+          <SectionHeading
+            id="products-title"
+            title="A small core. An interface you can edit."
+            aside={
+              <Link href="/docs/ui" className="ad-link">
+                Browse UI components <Icon name="arrow" />
+              </Link>
+            }
+          />
+          <div className="ad-products">
+            <article
+              className="ad-product ad-spot"
+              data-reveal
+              onPointerMove={trackPointer}
+            >
               <div className="ad-product-top">
-                <span className="ad-product-icon">
+                <span className="ad-stage-icon">
                   <Icon name="terminal" />
                 </span>
-                <span className="ad-pill">SERVER</span>
+                <span className="ad-tag">Server</span>
               </div>
-              <h3>
-                A small core.
-                <br />A steady stream.
-              </h3>
+              <h3>Agentdock core</h3>
               <p>
                 Serve your compiled graph through a Node response, a Web
                 Response, or an async iterable.
               </p>
-              <div
-                className="ad-event-visual"
-                aria-label="Example event sequence"
-              >
-                <div>
-                  <span className="ad-event-index">01</span>
-                  <code>run.started</code>
-                  <span className="ad-event-check">
-                    <Icon name="check" />
-                  </span>
-                </div>
-                <div>
-                  <span className="ad-event-index">02</span>
-                  <code>message.part.delta</code>
-                  <span className="ad-event-wave">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                </div>
-                <div>
-                  <span className="ad-event-index">03</span>
-                  <code>tool.completed</code>
-                  <span className="ad-event-check">
-                    <Icon name="check" />
-                  </span>
-                </div>
-                <div>
-                  <span className="ad-event-index">04</span>
-                  <code>interrupt.required</code>
-                  <span className="ad-event-wait">YOUR TURN</span>
-                </div>
-              </div>
-              <ul className="ad-product-features">
+              <ol className="ad-core-visual" aria-label="Example event sequence">
+                {coreEvents.map((event, index) => (
+                  <li
+                    key={event.type}
+                    data-tone={event.tone}
+                    style={{ "--i": index } as CSSProperties}
+                  >
+                    <span className="ad-stream-dot" aria-hidden="true" />
+                    <code>{event.type}</code>
+                    {event.tail === "check" && (
+                      <span className="ad-core-check">
+                        <Icon name="check" />
+                      </span>
+                    )}
+                    {event.tail === "wave" && (
+                      <span className="ad-wave" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
+                    {event.tail === "turn" && <span className="ad-turn">Your turn</span>}
+                  </li>
+                ))}
+              </ol>
+              <ul className="ad-features">
                 <li>
                   <Icon name="check" />
-                  Backpressure & disconnect cancellation
+                  Backpressure and disconnect cancellation
                 </li>
                 <li>
                   <Icon name="check" />
-                  Native checkpoint reads & resume
+                  Native checkpoint reads and resume
                 </li>
                 <li>
                   <Icon name="check" />
                   One shared JSON event contract
                 </li>
               </ul>
-              <Link href="/docs/api-reference" className="ad-text-link">
-                Get to know the core <Icon name="arrow" />
+              <Link href="/docs/api-reference" className="ad-link">
+                Read the API reference <Icon name="arrow" />
               </Link>
             </article>
-            <article className="ad-product ad-product-ui">
+
+            <article
+              className="ad-product ad-spot"
+              data-reveal
+              style={{ "--d": "120ms" } as CSSProperties}
+              onPointerMove={trackPointer}
+            >
               <div className="ad-product-top">
-                <span className="ad-product-icon">
+                <span className="ad-stage-icon">
                   <Icon name="layers" />
                 </span>
-                <span className="ad-pill">REACT</span>
+                <span className="ad-tag">React</span>
               </div>
-              <h3>
-                A chat interface.
-                <br />
-                With your fingerprints.
-              </h3>
+              <h3>Agentdock UI</h3>
               <p>
-                Copy the components into your app. Customize every detail with
-                your existing theme and primitives.
+                Copy chat components into your app, then shape every detail with
+                your own theme and primitives.
               </p>
-              <div className="ad-ui-visual">
-                <div className="ad-ui-visual-top">
-                  <Icon name="spark" />
-                  <span>Built for the whole conversation</span>
-                  <span className="ad-ui-badge">UI</span>
+              <div className="ad-ui-visual" aria-hidden="true">
+                <div className="ad-ui-msg">
+                  <span className="ad-ui-line" />
+                  <span className="ad-ui-line is-short" />
                 </div>
-                <div className="ad-ui-message">
-                  Here’s what I found.
-                  <div className="ad-ui-lines">
-                    <i />
-                    <i />
-                  </div>
-                </div>
-                <div className="ad-ui-tool">
+                <div className="ad-ui-chip">
                   <Icon name="check" />
-                  <span>Search complete</span>
+                  <code>search_documents</code>
                   <Icon name="chevron" />
                 </div>
                 <div className="ad-ui-input">
-                  <span>Ask a follow-up…</span>
-                  <span>
+                  <span className="ad-ui-typing">Summarize the thread</span>
+                  <span className="ad-composer-send">
                     <Icon name="arrow" />
                   </span>
                 </div>
               </div>
-              <ul className="ad-product-features">
+              <ul className="ad-features">
                 <li>
                   <Icon name="check" />
-                  Streaming, Markdown & tool disclosures
+                  Streaming, Markdown, and tool disclosures
                 </li>
                 <li>
                   <Icon name="check" />
-                  Approvals, cancellation & saved history
+                  Approvals, cancellation, and saved history
                 </li>
                 <li>
                   <Icon name="check" />
-                  App-owned adapter. Editable source.
+                  App-owned adapter and editable source
                 </li>
               </ul>
-              <Link
-                href="https://github.com/agentdock-ai/agentdock-ui"
-                className="ad-text-link"
-              >
-                Explore the UI source <Icon name="arrow" />
-              </Link>
-              <p className="ad-release-note">
-                Install with npx @agentdock-ai/agentdock-ui add chat
-              </p>
+              <div className="ad-install ad-install-block">
+                <span aria-hidden="true">$</span>
+                <code>npx @agentdock-ai/agentdock-ui add chat</code>
+                <CopyButton
+                  value="npx @agentdock-ai/agentdock-ui add chat"
+                  label="Copy UI install command"
+                />
+              </div>
             </article>
           </div>
         </section>
+
         <section
-          id="developers"
-          className="ad-section ad-container ad-developer"
-          aria-labelledby="developer-title"
+          className="ad-section ad-container ad-split"
+          aria-labelledby="code-title"
         >
-          <div className="ad-developer-copy">
-            <span className="ad-eyebrow">03 / LESS CEREMONY</span>
-            <h2 id="developer-title">
-              Your graph.
-              <br />A few lines.
-              <br />
-              <span>You’re connected.</span>
-            </h2>
+          <div className="ad-split-copy" data-reveal>
+            <h2 id="code-title">A few lines in the route you already have.</h2>
             <p>
-              No new agent loop to learn. Put Agentdock in your route controller
-              and send the events to your app.
+              No new agent loop to learn. Hand Agentdock your graph inside an
+              authorized route, and the events flow to your app.
             </p>
-            <Link href="/docs/quickstart" className="ad-text-link">
+            <ul className="ad-features">
+              <li>
+                <Icon name="check" />
+                Keep your framework, model, and tools
+              </li>
+              <li>
+                <Icon name="check" />
+                Abort signals cancel the run cleanly
+              </li>
+            </ul>
+            <Link href="/docs/quickstart" className="ad-link">
               Walk through the quickstart <Icon name="arrow" />
             </Link>
-            <div className="ad-developer-note">
-              <Icon name="code" />
-              <span>
-                Use your framework.
-                <br />
-                Keep your model and tools.
-              </span>
-            </div>
           </div>
-          <div className="ad-code-panel">
-            <div
-              className="ad-code-tabs"
-              role="tablist"
-              aria-label="Integration examples"
-            >
-              {(Object.keys(examples) as Example[]).map((key) => (
-                <button
-                  key={key}
-                  id={`tab-${key}`}
-                  role="tab"
-                  aria-selected={example === key}
-                  aria-controls="integration-code"
-                  tabIndex={example === key ? 0 : -1}
-                  onClick={() => setExample(key)}
-                  onKeyDown={(event) => {
-                    const keys = Object.keys(examples) as Example[];
-                    const index = keys.indexOf(key);
-                    const next =
-                      event.key === "ArrowRight"
-                        ? keys[(index + 1) % keys.length]
-                        : event.key === "ArrowLeft"
-                          ? keys[(index + keys.length - 1) % keys.length]
-                          : event.key === "Home"
-                            ? keys[0]
-                            : event.key === "End"
-                              ? keys[keys.length - 1]
-                              : null;
-                    if (next) {
-                      event.preventDefault();
-                      setExample(next);
-                      document.getElementById(`tab-${next}`)?.focus();
-                    }
-                  }}
-                >
-                  {examples[key].label}
-                </button>
-              ))}
-            </div>
-            <div className="ad-code-file">
-              <span>
-                <Icon name="code" />
-                {examples[example].file}
-              </span>
-              <CopyButton value={examples[example].code} label="Copy code" />
-            </div>
-            <pre
-              ref={codeRef}
-              id="integration-code"
-              role="tabpanel"
-              aria-labelledby={`tab-${example}`}
-              tabIndex={0}
-            >
-              <HighlightedCode code={examples[example].code} />
-            </pre>
-            <div className="ad-code-footer">
-              <span>
-                <i />
-                {example === "react"
-                  ? "Editable components · npm installer"
-                  : "Compiled graph → canonical events"}
-              </span>
-              <Link
-                href={example === "react" ? "/docs/ui" : "/docs/installation"}
-              >
-                Setup guide <Icon name="arrow" />
-              </Link>
-            </div>
-          </div>
+          <CodePanel />
         </section>
+
         <section
-          className="ad-section ad-container ad-agent-prompt"
-          aria-labelledby="agent-prompt-title"
+          className="ad-section ad-container ad-split ad-prompt"
+          aria-labelledby="prompt-title"
         >
-          <div>
-            <span className="ad-eyebrow">IMPLEMENT WITH YOUR AI AGENT</span>
-            <h2 id="agent-prompt-title">Start with the right questions.</h2>
+          <div className="ad-split-copy" data-reveal>
+            <h2 id="prompt-title">Let your coding agent do the setup.</h2>
             <p>
-              Copy this brief into your coding agent. It reads the Agentdock
-              guide, asks about your app first, then implements to your needs.
+              Paste this brief into your coding agent. It reads the Agentdock
+              guide, asks about your app first, and then builds to fit.
             </p>
-            <Link href="/skills.md" className="ad-text-link">
+            <Link href="/skills.md" className="ad-link">
               Read the agent guide <Icon name="arrow" />
             </Link>
           </div>
-          <div className="ad-agent-prompt-card">
-            <pre>{agentImplementationPrompt}</pre>
-            <CopyButton value={agentImplementationPrompt} label="Copy prompt" />
+          <div
+            className="ad-prompt-card"
+            data-reveal
+            style={{ "--d": "120ms" } as CSSProperties}
+          >
+            <div className="ad-prompt-head">
+              <span>
+                <Icon name="spark" />
+                Agent brief
+              </span>
+              <CopyButton
+                value={agentImplementationPrompt}
+                label="Copy brief"
+                showLabel
+              />
+            </div>
+            <pre tabIndex={0}>{agentImplementationPrompt}</pre>
           </div>
         </section>
+
         <section
-          className="ad-section ad-container ad-faq"
+          className="ad-section ad-container ad-split ad-faq"
           aria-labelledby="faq-title"
         >
-          <div>
-            <span className="ad-eyebrow">A FEW GOOD QUESTIONS</span>
-            <h2 id="faq-title">
-              Before you
-              <br />
-              <span>start building.</span>
-            </h2>
+          <div className="ad-split-copy" data-reveal>
+            <h2 id="faq-title">Questions before you start.</h2>
             <p>
-              More details in the{" "}
-              <Link href="/docs">
-                documentation <Icon name="external" />
+              Anything else is covered in the{" "}
+              <Link href="/docs" className="ad-inline-link">
+                documentation
               </Link>
+              .
             </p>
           </div>
-          <div className="ad-faq-list">
-            {faqs.map(([question, answer]) => (
-              <details key={question}>
-                <summary>
-                  {question}
-                  <span aria-hidden="true">
-                    <Icon name="plus" />
-                  </span>
-                </summary>
-                <p>{answer}</p>
-              </details>
-            ))}
-          </div>
+          <Faq />
         </section>
-        <section
-          className="ad-final ad-container"
-          aria-labelledby="final-title"
-        >
-          <div className="ad-final-grid" aria-hidden="true" />
-          <span className="ad-eyebrow">
-            BUILD SOMETHING THAT FEELS LIKE YOURS.
-          </span>
-          <h2 id="final-title">
-            Great agents deserve
-            <br />
-            <span>a great experience.</span>
-          </h2>
-          <p>Start with your graph. We’ll help you connect the rest.</p>
-          <div>
-            <Link
-              href="/docs/quickstart"
-              className="ad-button ad-button-primary"
-            >
-              Start building <Icon name="arrow" />
-            </Link>
-            <a
-              href="https://github.com/agentdock-ai/agentdock"
-              className="ad-button ad-button-outline"
-            >
-              Explore on GitHub <Icon name="code" />
-            </a>
+
+        <section className="ad-container ad-final-wrap" aria-labelledby="final-title">
+          <div className="ad-final ad-spot" data-reveal onPointerMove={trackPointer}>
+            <div className="ad-final-grid" aria-hidden="true" />
+            <h2 id="final-title">Ship the agent. Keep the product yours.</h2>
+            <p>Start with your graph. Agentdock connects the rest.</p>
+            <div className="ad-final-actions">
+              <Link
+                href="/docs/quickstart"
+                className="ad-btn ad-btn-light"
+                {...magnetic}
+              >
+                Start building <Icon name="arrow" />
+              </Link>
+              <a
+                href="https://github.com/agentdock-ai/agentdock"
+                className="ad-btn ad-btn-outline-light"
+              >
+                View on GitHub <Icon name="external" />
+              </a>
+            </div>
           </div>
-          <span className="ad-final-footnote">
-            Open source · MIT licensed · Built to be yours
-          </span>
         </section>
       </main>
+
       <footer className="ad-footer ad-container">
-        <div>
-          <Link href="/" aria-label="Agentdock home">
+        <div className="ad-footer-brand">
+          <Link href="/" aria-label="Agentdock home" className="ad-home">
             <AgentdockBrand />
           </Link>
           <p>The connection between your agent and your app.</p>
